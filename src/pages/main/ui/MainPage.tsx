@@ -6,6 +6,7 @@ import {
   Container,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   Pagination,
   Stack,
@@ -13,12 +14,14 @@ import {
   Typography,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import type { SearchObjectsResult } from '@shared/api';
 import { searchObjects } from '@shared/api';
 import { useAuth } from '@shared/auth/useAuth';
 
 export function MainPage() {
   const auth = useAuth();
+  const navigate = useNavigate();
 
   const [query, setQuery] = useState('');
   // "applied" query is the one we actually search by (only updates on Enter)
@@ -136,11 +139,17 @@ export function MainPage() {
 
             <List dense disablePadding>
               {hits.map((hit) => (
-                <ListItem key={hit.objectId} divider>
-                  <ListItemText
-                    primary={hit.objectId}
-                    secondary={hit.entityType ?? '—'}
-                  />
+                <ListItem key={hit.objectId} divider disablePadding>
+                  <ListItemButton
+                    onClick={() =>
+                      void navigate({
+                        to: '/objects/$objectId',
+                        params: { objectId: hit.objectId },
+                      })
+                    }
+                  >
+                    <ListItemText primary={hit.objectId} secondary={hit.entityType ?? '—'} />
+                  </ListItemButton>
                 </ListItem>
               ))}
             </List>

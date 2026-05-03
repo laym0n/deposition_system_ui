@@ -3,6 +3,7 @@ import { createRoute, createRootRoute, createRouter, Outlet } from '@tanstack/re
 import { MainPage } from '@pages/main';
 import { AuthCallbackPage } from '@pages/auth-callback';
 import { AuthSilentRenewPage } from '@pages/auth-silent-renew';
+import { ObjectPage } from '@pages/object';
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -26,7 +27,18 @@ const authSilentRenewRoute = createRoute({
   component: AuthSilentRenewPage,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, authCallbackRoute, authSilentRenewRoute]);
+const objectRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/objects/$objectId',
+  component: ObjectPage,
+});
+
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  authCallbackRoute,
+  authSilentRenewRoute,
+  objectRoute,
+]);
 
 export const router = createRouter({
   routeTree,
