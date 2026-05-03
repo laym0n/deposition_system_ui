@@ -7,7 +7,9 @@ type HeadersLike = Record<string, string>;
 
 function getApiUrl(): string {
   // Provided by dotenv-webpack (see webpack config). Fallback is helpful for local overrides.
-  return (process.env.API_URL as string | undefined) ?? 'http://158.160.194.122';
+  // In local dev we use webpack-dev-server proxy to avoid CORS:
+  // requests go to same-origin '/api' and are proxied to real backend.
+  return (process.env.API_URL as string | undefined) ?? '/api';
 }
 
 export class HttpError extends Error {

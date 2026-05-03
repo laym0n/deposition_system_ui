@@ -4,6 +4,7 @@ import { oidcUserManager } from '@shared/auth/oidc';
 
 export function AuthCallbackPage() {
   const [error, setError] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<string | null>(null);
 
   useEffect(() => {
     oidcUserManager
@@ -13,6 +14,15 @@ export function AuthCallbackPage() {
       })
       .catch((e) => {
         setError(e instanceof Error ? e.message : String(e));
+        try {
+          // help diagnose auth issues in dev (state lost, wrong origin, etc.)
+          setErrorDetails(JSON.stringify(e, Object.getOwnPropertyNames(e), 2));
+          // also log to console for copy/paste
+          // eslint-disable-next-line no-console
+          console.error('OIDC signinRedirectCallback error', e);
+        } catch {
+          setErrorDetails(String(e));
+        }
       });
   }, []);
 
@@ -28,7 +38,14 @@ export function AuthCallbackPage() {
         )}
 
         {error && (
-          <Alert severity="error">Не удалось завершить вход: {error}</Alert>
+          <Alert severity="error">
+            Не удалось завершить вход: {error}
+            {errorDetails && (
+              <Box component="pre" sx={{ whiteSpace: 'pre-wrap', mt: 1, mb: 0, fontSize: 12 }}>
+                {errorDetails}
+              </Box>
+            )}
+          </Alert>
         )}
       </Stack>
     </Container>
