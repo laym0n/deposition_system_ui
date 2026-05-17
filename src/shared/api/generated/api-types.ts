@@ -36,6 +36,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/intellectual-entity-types/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getById"];
+        put: operations["update"];
+        post?: never;
+        delete: operations["delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/descriptive-metadata/schema/{schemaId}/active": {
         parameters: {
             query?: never;
@@ -116,6 +132,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/intellectual-entity-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list"];
+        put?: never;
+        post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/descriptive-metadata/schema": {
         parameters: {
             query?: never;
@@ -155,7 +187,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List deposition jobs of current user (paginated) */
+        get: operations["listMyJobs"];
         put?: never;
         post: operations["createJob"];
         delete?: never;
@@ -210,6 +243,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["updateMetadata"];
+        trace?: never;
+    };
+    "/users/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["searchUsers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/statistics/events": {
@@ -354,14 +403,23 @@ export interface components {
             txId: string;
             versionId?: string;
         };
+        UpdateRequest: {
+            name: string;
+            description?: string;
+        };
+        IntellectualEntityTypeDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            description?: string;
+        };
         UpdateActiveRequest: {
             active: boolean;
         };
         DescriptiveMetadataSchemaDto: {
             /** Format: uuid */
             id?: string;
-            /** @enum {string} */
-            entityType?: "DATABASE" | "SCIENTIFIC_WORK";
+            entityTypeName?: string;
             schemaJson?: string;
             active?: boolean;
             /** Format: date-time */
@@ -477,16 +535,26 @@ export interface components {
         Hit: {
             /** Format: uuid */
             objectId: string;
-            entityType: string;
+            intellectualEntityType?: components["schemas"]["IntellectualEntityType"];
+            originalName?: string;
+        };
+        IntellectualEntityType: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            description?: string;
         };
         SearchObjectsResult: {
             /** Format: int64 */
             total?: number;
             hits: components["schemas"]["Hit"][];
         };
+        CreateRequest: {
+            name: string;
+            description?: string;
+        };
         CreateSchemaRequest: {
-            /** @enum {string} */
-            entityType: "DATABASE" | "SCIENTIFIC_WORK";
+            entityTypeName: string;
             schemaJson: string;
         };
         DeponeMultipartForm: {
@@ -540,18 +608,20 @@ export interface components {
             originalName: string;
         };
         CreateJobRequest: {
-            /** @enum {string} */
-            intellectualEntityType?: "DATABASE" | "SCIENTIFIC_WORK";
+            intellectualEntityTypeName: string;
             intellectualEntityMetadata?: components["schemas"]["IntellectualEntityMetadataParam"];
             descriptiveMetadata?: string;
-            representationMetadata?: components["schemas"]["RepresentationMetadataParam"];
-            files?: components["schemas"]["DepositionJobFileUploadParam"][];
+            representations: components["schemas"]["DepositionJobRepresentationUploadParam"][];
         };
         DepositionJobFileUploadParam: {
             originalName: string;
             contentType?: string;
             /** Format: int64 */
             sizeBytes?: number;
+        };
+        DepositionJobRepresentationUploadParam: {
+            representationMetadata?: components["schemas"]["RepresentationMetadataParam"];
+            files: components["schemas"]["DepositionJobFileUploadParam"][];
         };
         CreateDepositionJobResult: {
             /** Format: uuid */
@@ -590,6 +660,10 @@ export interface components {
             representationId: string;
             representationMetadata?: components["schemas"]["RepresentationMetadataParam"];
             files?: components["schemas"]["UpdateFileMetadataParam"][];
+        };
+        UserSummaryResponse: {
+            id?: string;
+            username?: string;
         };
         StatisticsEventResponse: {
             /** Format: uuid */
@@ -634,6 +708,9 @@ export interface components {
         CachedObjectMetadataResponse: {
             /** Format: uuid */
             objectId: string;
+            intellectualEntityType: components["schemas"]["IntellectualEntityType"];
+            /** @enum {string} */
+            visibility?: "PUBLIC" | "PRIVATE";
             premisMetadata: components["schemas"]["PremisMetadata"];
             descriptiveMetadata?: {
                 [key: string]: unknown;
@@ -654,13 +731,35 @@ export interface components {
         DescriptiveMetadataSchemaSummaryDto: {
             /** Format: uuid */
             id?: string;
-            /** @enum {string} */
-            entityType?: "DATABASE" | "SCIENTIFIC_WORK";
+            entityTypeName?: string;
             active?: boolean;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
             updatedAt?: string;
+        };
+        DepositionJobListItem: {
+            /** Format: uuid */
+            jobId: string;
+            /** Format: uuid */
+            objectId: string;
+            objectName?: string;
+            intellectualEntityTypeName?: string;
+            /** @enum {string} */
+            status: "UPLOADING" | "PROCESSING" | "COMPLETED" | "FAILED" | "CANCELLED";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        DepositionJobPage: {
+            items: components["schemas"]["DepositionJobListItem"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalItems?: number;
         };
         DepositionJobStatusResponse: {
             /** Format: uuid */
@@ -714,7 +813,7 @@ export interface operations {
     upsertDescriptiveMetadata: {
         parameters: {
             query: {
-                entityType: "DATABASE" | "SCIENTIFIC_WORK";
+                entityType: string;
             };
             header?: never;
             path: {
@@ -738,6 +837,74 @@ export interface operations {
                         [key: string]: unknown;
                     };
                 };
+            };
+        };
+    };
+    getById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntellectualEntityTypeDto"];
+                };
+            };
+        };
+    };
+    update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntellectualEntityTypeDto"];
+                };
+            };
+        };
+    };
+    delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -869,6 +1036,50 @@ export interface operations {
             };
         };
     };
+    list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntellectualEntityTypeDto"][];
+                };
+            };
+        };
+    };
+    create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntellectualEntityTypeDto"];
+                };
+            };
+        };
+    };
     createSchema: {
         parameters: {
             query?: never;
@@ -896,7 +1107,7 @@ export interface operations {
     depone: {
         parameters: {
             query: {
-                intellectualEntityType: "DATABASE" | "SCIENTIFIC_WORK";
+                intellectualEntityType: string;
             };
             header?: never;
             path?: never;
@@ -915,6 +1126,37 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["DepositionResult"];
+                };
+            };
+        };
+    };
+    listMyJobs: {
+        parameters: {
+            query?: {
+                /**
+                 * @description 0-based page index
+                 * @example 0
+                 */
+                page?: number;
+                /**
+                 * @description page size
+                 * @example 20
+                 */
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepositionJobPage"];
                 };
             };
         };
@@ -1042,6 +1284,30 @@ export interface operations {
             };
         };
     };
+    searchUsers: {
+        parameters: {
+            query?: {
+                searchQuery?: string;
+                offset?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserSummaryResponse"][];
+                };
+            };
+        };
+    };
     getEvents: {
         parameters: {
             query: {
@@ -1164,7 +1430,7 @@ export interface operations {
     getSchemas: {
         parameters: {
             query?: {
-                entityType?: "DATABASE" | "SCIENTIFIC_WORK";
+                entityType?: string;
                 active?: boolean;
             };
             header?: never;

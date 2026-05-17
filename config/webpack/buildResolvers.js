@@ -7,6 +7,7 @@ function buildResolvers(options) {
   return {
     extensions: ['.tsx', '.ts', '.js'],
     alias: aliases,
+    fallback: {},
     plugins: [
       new TsconfigPathsPlugin({
         configFile: path.resolve(__dirname, '..', '..', 'tsconfig.json'),

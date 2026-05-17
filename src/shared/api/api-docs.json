@@ -1,1 +1,1493 @@
-{"openapi":"3.1.0","info":{"title":"OpenAPI definition","version":"v0"},"servers":[{"url":"http://158.160.194.122","description":"Generated server url"}],"paths":{"/objects/{objectId}/visibility":{"put":{"tags":["object-visibility-controller"],"operationId":"updateVisibility","parameters":[{"name":"objectId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/UpdateObjectVisibilityRequest"}}},"required":true},"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/DepositionResult"}}}}},"security":[{"bearerAuth":[]}]}},"/objects/{objectId}/descriptive-metadata":{"put":{"tags":["object-controller"],"operationId":"upsertDescriptiveMetadata","parameters":[{"name":"objectId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"entityType","in":"query","required":true,"schema":{"type":"string","enum":["DATABASE","SCIENTIFIC_WORK"]}}],"requestBody":{"content":{"application/json":{"schema":{"type":"string"}}},"required":true},"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"type":"object","additionalProperties":{}}}}}},"security":[{"bearerAuth":[]}]}},"/descriptive-metadata/schema/{schemaId}/active":{"put":{"tags":["descriptive-metadata-schema-controller"],"operationId":"updateActive","parameters":[{"name":"schemaId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/UpdateActiveRequest"}}},"required":true},"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/DescriptiveMetadataSchemaDto"}}}}},"security":[{"bearerAuth":[]}]}},"/objects/{objectId}/rights-statement":{"post":{"tags":["rights-statement-controller"],"operationId":"upsertRightsStatement","parameters":[{"name":"objectId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/UpsertRightsStatementRequest"}}},"required":true},"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/DepositionResult"}}}}},"security":[{"bearerAuth":[]}]}},"/objects/{objectId}/events":{"post":{"tags":["object-event-controller"],"operationId":"recordEvent","parameters":[{"name":"objectId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/RecordObjectEventRequest"}}},"required":true},"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/DepositionResult"}}}}},"security":[{"bearerAuth":[]}]}},"/objects/{objectId}/acl/users":{"post":{"tags":["object-acl-controller"],"operationId":"upsertUserAclEntry","parameters":[{"name":"objectId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/UpsertObjectAclEntryRequest"}}},"required":true},"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/DepositionResult"}}}}},"security":[{"bearerAuth":[]}]}},"/objects/search":{"post":{"tags":["object-controller"],"operationId":"searchObjects","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ObjectSearchRequest"}}},"required":true},"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/SearchObjectsResult"}}}}},"security":[{"bearerAuth":[]}]}},"/descriptive-metadata/schema":{"post":{"tags":["descriptive-metadata-schema-controller"],"operationId":"createSchema","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/CreateSchemaRequest"}}},"required":true},"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/DescriptiveMetadataSchemaDto"}}}}},"security":[{"bearerAuth":[]}]}},"/depone":{"post":{"tags":["object-controller"],"operationId":"depone","parameters":[{"name":"intellectualEntityType","in":"query","required":true,"schema":{"type":"string","enum":["DATABASE","SCIENTIFIC_WORK"]}}],"requestBody":{"content":{"multipart/form-data":{"schema":{"$ref":"#/components/schemas/DeponeMultipartForm"},"encoding":{"request":{"contentType":"application/json"},"files":{"contentType":"application/octet-stream"}}}}},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/DepositionResult"}}}}},"security":[{"bearerAuth":[]}]}},"/depone/jobs":{"post":{"tags":["deposition-job-controller"],"operationId":"createJob","parameters":[{"name":"Idempotency-Key","in":"header","required":false,"schema":{"type":"string"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/CreateJobRequest"}}},"required":true},"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/CreateDepositionJobResult"}}}}},"security":[{"bearerAuth":[]}]}},"/depone/jobs/{jobId}/submit":{"post":{"tags":["deposition-job-controller"],"operationId":"submit","parameters":[{"name":"jobId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK"}},"security":[{"bearerAuth":[]}]}},"/objects/{objectId}/rights-statements/{rightsStatementId}":{"patch":{"tags":["rights-statement-controller"],"operationId":"updateRightsStatement","parameters":[{"name":"objectId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"rightsStatementId","in":"path","required":true,"schema":{"type":"string"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/UpsertRightsStatementRequest"}}},"required":true},"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/DepositionResult"}}}}},"security":[{"bearerAuth":[]}]}},"/objects/{objectId}/metadata":{"get":{"tags":["object-controller"],"operationId":"getPremisMetadata","parameters":[{"name":"objectId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"versionId","in":"query","required":false,"schema":{"type":"string"}}],"responses":{"200":{"description":"OK","content":{"application/xml":{"schema":{"type":"string","format":"binary"}}}}},"security":[{"bearerAuth":[]}]},"patch":{"tags":["object-controller"],"operationId":"updateMetadata","parameters":[{"name":"objectId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/UpdateMetadataParams"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/DepositionResult"}}}}},"security":[{"bearerAuth":[]}]}},"/statistics/events":{"get":{"tags":["statistics-controller"],"operationId":"getEvents","parameters":[{"name":"objectId","in":"query","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"from","in":"query","required":true,"schema":{"type":"string","format":"date-time"}},{"name":"to","in":"query","required":true,"schema":{"type":"string","format":"date-time"}},{"name":"eventType","in":"query","required":false,"schema":{"type":"string","enum":["OBJECT_VIEW","FILE_DOWNLOAD","PROOF_REQUEST","OBJECT_DEPOSIT","OBJECT_VERSION_CREATE","OBJECT_METADATA_UPDATE","OBJECT_ACCESS_GRANTED","OBJECT_ACCESS_REVOKED"]}}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/StatisticsEventResponse"}}}}}},"security":[{"bearerAuth":[]}]}},"/objects/{objectId}/verify":{"get":{"tags":["object-controller"],"operationId":"verifyPremis","parameters":[{"name":"objectId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"versionId","in":"query","required":false,"schema":{"type":"string"}}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/VerifyPremisResult"}}}}},"security":[{"bearerAuth":[]}]}},"/objects/{objectId}/source-files":{"get":{"tags":["object-controller"],"operationId":"downloadSourceFiles","parameters":[{"name":"objectId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"fileId","in":"query","required":true,"schema":{"type":"array","items":{"type":"string","format":"uuid"}}}],"responses":{"200":{"description":"OK","content":{"application/zip":{"schema":{"type":"string","format":"binary"}}}}},"security":[{"bearerAuth":[]}]}},"/objects/{objectId}/source-files/presigned":{"get":{"tags":["object-controller"],"operationId":"presignSourceFilesDownload","parameters":[{"name":"objectId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"fileId","in":"query","required":true,"schema":{"type":"array","items":{"type":"string","format":"uuid"}}}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/PresignedSourceFilesDownloadResponse"}}}}}},"security":[{"bearerAuth":[]}]}},"/objects/{objectId}/cached-metadata":{"get":{"tags":["object-controller"],"operationId":"getCachedMetadata","parameters":[{"name":"objectId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/CachedObjectMetadataResponse"}}}}},"security":[{"bearerAuth":[]}]}},"/descriptive-metadata/schemas":{"get":{"tags":["descriptive-metadata-schema-controller"],"operationId":"getSchemas","parameters":[{"name":"entityType","in":"query","required":false,"schema":{"type":"string","enum":["DATABASE","SCIENTIFIC_WORK"]}},{"name":"active","in":"query","required":false,"schema":{"type":"boolean"}}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/DescriptiveMetadataSchemaSummaryDto"}}}}}},"security":[{"bearerAuth":[]}]}},"/descriptive-metadata/schemas/{schemaId}":{"get":{"tags":["descriptive-metadata-schema-controller"],"operationId":"getSchemaById","parameters":[{"name":"schemaId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"type":"object","additionalProperties":{}}}}}},"security":[{"bearerAuth":[]}]}},"/depone/jobs/{jobId}":{"get":{"tags":["deposition-job-controller"],"operationId":"status","parameters":[{"name":"jobId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"$ref":"#/components/schemas/DepositionJobStatusResponse"}}}}},"security":[{"bearerAuth":[]}]}}},"components":{"schemas":{"UpdateObjectVisibilityRequest":{"type":"object","properties":{"visibility":{"type":"string","enum":["PUBLIC","PRIVATE"]}},"required":["visibility"]},"DepositionResult":{"type":"object","properties":{"objectId":{"type":"string","format":"uuid"},"txId":{"type":"string"},"versionId":{"type":"string"}},"required":["objectId","txId"]},"UpdateActiveRequest":{"type":"object","properties":{"active":{"type":"boolean"}},"required":["active"]},"DescriptiveMetadataSchemaDto":{"type":"object","properties":{"id":{"type":"string","format":"uuid"},"entityType":{"type":"string","enum":["DATABASE","SCIENTIFIC_WORK"]},"schemaJson":{"type":"string"},"active":{"type":"boolean"},"createdAt":{"type":"string","format":"date-time"},"updatedAt":{"type":"string","format":"date-time"}}},"AgentDto":{"type":"object","properties":{"name":{"type":"string","minLength":1},"type":{"type":"string","enum":["HARDWARE","ORGANIZATION","PERSON","SOFTWARE"]},"identifiers":{"type":"array","items":{"$ref":"#/components/schemas/AgentIdentifier"}}},"required":["name","type"]},"AgentGrant":{"type":"object","properties":{"agent":{"$ref":"#/components/schemas/AgentDto"},"linkingAgentRoles":{"type":"array","items":{"type":"string"}}},"required":["agent"]},"AgentIdentifier":{"type":"object","properties":{"type":{"type":"string","enum":["SYSTEM","PUBLIC","OTHER"]},"value":{"type":"string"}}},"ApplicableDates":{"type":"object","properties":{"startDate":{"type":"string","format":"date-time"},"endDate":{"type":"string","format":"date-time"}}},"CopyrightInformation":{"type":"object","properties":{"copyrightStatus":{"type":"string"},"copyrightJurisdiction":{"type":"string"},"copyrightStatusDeterminationDate":{"type":"string","format":"date"},"copyrightNote":{"type":"array","items":{"type":"string"}},"documentationIdentifiers":{"type":"array","items":{"$ref":"#/components/schemas/DocumentationIdentifier"}},"applicableDates":{"$ref":"#/components/schemas/ApplicableDates"}}},"DocumentationIdentifier":{"type":"object","properties":{"type":{"type":"string"},"value":{"type":"string"},"role":{"type":"string"}}},"LicenseInformation":{"type":"object","properties":{"documentationIdentifiers":{"type":"array","items":{"$ref":"#/components/schemas/DocumentationIdentifier"}},"licenseTerms":{"type":"string"},"licenseNote":{"type":"array","items":{"type":"string"}},"applicableDates":{"$ref":"#/components/schemas/ApplicableDates"}}},"OtherRightsInformation":{"type":"object","properties":{"documentationIdentifiers":{"type":"array","items":{"$ref":"#/components/schemas/DocumentationIdentifier"}},"otherRightsBasis":{"type":"string"},"applicableDates":{"$ref":"#/components/schemas/ApplicableDates"},"otherRightsNote":{"type":"array","items":{"type":"string"}}}},"RightsGranted":{"type":"object","properties":{"act":{"type":"string"},"restriction":{"type":"array","items":{"type":"string"}},"termOfGrant":{"$ref":"#/components/schemas/ApplicableDates"},"termOfRestriction":{"$ref":"#/components/schemas/ApplicableDates"},"rightsGrantedNote":{"type":"array","items":{"type":"string"}}}},"RightsStatementPayload":{"type":"object","properties":{"copyrightInformation":{"$ref":"#/components/schemas/CopyrightInformation"},"licenseInformation":{"$ref":"#/components/schemas/LicenseInformation"},"statuteInformation":{"type":"array","items":{"$ref":"#/components/schemas/StatuteInformation"}},"otherRightsInformation":{"$ref":"#/components/schemas/OtherRightsInformation"},"rightsGranted":{"type":"array","items":{"$ref":"#/components/schemas/RightsGranted"}}}},"StatuteInformation":{"type":"object","properties":{"statuteJurisdiction":{"type":"string"},"statuteCitation":{"type":"string"},"statuteInformationDeterminationDate":{"type":"string","format":"date"},"statuteNote":{"type":"array","items":{"type":"string"}},"documentationIdentifiers":{"type":"array","items":{"$ref":"#/components/schemas/DocumentationIdentifier"}},"applicableDates":{"$ref":"#/components/schemas/ApplicableDates"}}},"UpsertRightsStatementRequest":{"type":"object","properties":{"rightsStatementId":{"type":"string"},"rightsBasis":{"type":"string","enum":["COPYRIGHT","LICENSE","STATUTE","OTHER"]},"payload":{"$ref":"#/components/schemas/RightsStatementPayload"},"agents":{"type":"array","items":{"$ref":"#/components/schemas/AgentGrant"}}},"required":["rightsBasis"]},"EventDetailInformation":{"type":"object","properties":{"detail":{"type":"string"}}},"EventOutcomeInformation":{"type":"object","properties":{"outcome":{"type":"string","enum":["SUCCESS","FAILURE"]},"outcomeDetail":{"type":"array","items":{"$ref":"#/components/schemas/EventOutcomeInformationDetail"}}}},"EventOutcomeInformationDetail":{"type":"object","properties":{"eventOutcomeDetailNote":{"type":"string"}}},"RecordObjectEventRequest":{"type":"object","properties":{"type":{"type":"string","enum":["ACCESSION","CREATION","DEACCESSION","DELETION","METADATA_MODIFICATION","MIGRATION","OTHER"]},"detail":{"type":"array","items":{"$ref":"#/components/schemas/EventDetailInformation"}},"outcome":{"type":"array","items":{"$ref":"#/components/schemas/EventOutcomeInformation"}}},"required":["type"]},"UpsertObjectAclEntryRequest":{"type":"object","properties":{"userId":{"type":"string","minLength":1},"permissions":{"type":"array","items":{"type":"string","enum":["READ","WRITE","READ_SOURCE_FILE"]},"uniqueItems":true}},"required":["permissions","userId"]},"ObjectSearchRequest":{"type":"object","properties":{"searchQuery":{"type":"string"},"offset":{"type":"integer","format":"int32","minimum":0},"limit":{"type":"integer","format":"int32","maximum":500,"minimum":1}}},"Hit":{"type":"object","properties":{"objectId":{"type":"string","format":"uuid"},"entityType":{"type":"string"}},"required":["entityType","objectId"]},"SearchObjectsResult":{"type":"object","properties":{"total":{"type":"integer","format":"int64"},"hits":{"type":"array","items":{"$ref":"#/components/schemas/Hit"}}},"required":["hits"]},"CreateSchemaRequest":{"type":"object","properties":{"entityType":{"type":"string","enum":["DATABASE","SCIENTIFIC_WORK"]},"schemaJson":{"type":"string"}},"required":["entityType","schemaJson"]},"DeponeMultipartForm":{"type":"object","properties":{"request":{"$ref":"#/components/schemas/DeponeMultipartRequest","description":"JSON часть с метаданными"},"files":{"type":"array","description":"Файлы для депонирования","items":{"type":"string","format":"binary"}}}},"DeponeMultipartRequest":{"type":"object","properties":{"intellectualEntityMetadata":{"$ref":"#/components/schemas/IntellectualEntityMetadataParam"},"descriptiveMetadata":{"type":"string"},"representationMetadata":{"$ref":"#/components/schemas/RepresentationMetadataParam"},"fileMetadata":{"type":"array","items":{"$ref":"#/components/schemas/FileMetadataParam"}}}},"FileMetadataParam":{"type":"object","properties":{"originalName":{"type":"string","minLength":1}},"required":["originalName"]},"IntellectualEntityMetadataParam":{"type":"object","properties":{"originalName":{"type":"string","minLength":1},"identifiers":{"type":"array","items":{"$ref":"#/components/schemas/ObjectIdentifier"}},"relationships":{"type":"array","items":{"$ref":"#/components/schemas/Relationship"}}},"required":["originalName"]},"ObjectIdentifier":{"type":"object","properties":{"type":{"type":"string","enum":["SYSTEM","OTHER"]},"value":{"type":"string"}}},"RelationEventIdentifier":{"type":"object","properties":{"type":{"type":"string","enum":["SYSTEM","OTHER"]},"value":{"type":"string"},"sequence":{"type":"integer","format":"int64"}}},"RelationObjectIdentifier":{"type":"object","properties":{"type":{"type":"string","enum":["SYSTEM","OTHER"]},"value":{"type":"string"},"sequence":{"type":"integer","format":"int64"}}},"Relationship":{"type":"object","properties":{"type":{"type":"string","enum":["DEPENDENCY","DERIVATION","LOGICAL","REFERENCE","REPLACEMENT","STRUCTURAL"]},"subType":{"type":"string","enum":["HAS_PART","INCLUDES","IS_INCLUDED_IN","IS_PART_OF","IS_REPRESENTED_BY","REPRESENTS","OTHER"]},"relatedObjects":{"type":"array","items":{"$ref":"#/components/schemas/RelationObjectIdentifier"}},"relatedEvents":{"type":"array","items":{"$ref":"#/components/schemas/RelationEventIdentifier"}}}},"RepresentationMetadataParam":{"type":"object","properties":{"originalName":{"type":"string","minLength":1}},"required":["originalName"]},"CreateJobRequest":{"type":"object","properties":{"intellectualEntityType":{"type":"string","enum":["DATABASE","SCIENTIFIC_WORK"]},"intellectualEntityMetadata":{"$ref":"#/components/schemas/IntellectualEntityMetadataParam"},"descriptiveMetadata":{"type":"string"},"representationMetadata":{"$ref":"#/components/schemas/RepresentationMetadataParam"},"files":{"type":"array","items":{"$ref":"#/components/schemas/DepositionJobFileUploadParam"}}}},"DepositionJobFileUploadParam":{"type":"object","properties":{"originalName":{"type":"string"},"contentType":{"type":"string"},"sizeBytes":{"type":"integer","format":"int64"}},"required":["originalName"]},"CreateDepositionJobResult":{"type":"object","properties":{"jobId":{"type":"string","format":"uuid"},"objectId":{"type":"string","format":"uuid"},"status":{"type":"string","enum":["UPLOADING","PROCESSING","COMPLETED","FAILED","CANCELLED"]},"uploads":{"type":"array","items":{"$ref":"#/components/schemas/PresignedUpload"}}},"required":["jobId","objectId","status","uploads"]},"PresignedUpload":{"type":"object","properties":{"fileId":{"type":"string","format":"uuid"},"contentLocation":{"type":"string","format":"uri"},"objectKey":{"type":"string"},"uploadUrl":{"type":"string","format":"uri"},"expiresAt":{"type":"string","format":"date-time"},"requiredHeaders":{"type":"object","additionalProperties":{"type":"string"}}},"required":["contentLocation","expiresAt","fileId","objectKey","requiredHeaders","uploadUrl"]},"UpdateFileMetadataParam":{"type":"object","properties":{"fileId":{"type":"string","format":"uuid"},"fileMetadata":{"$ref":"#/components/schemas/FileMetadataParam"}},"required":["fileId"]},"UpdateMetadataParams":{"type":"object","properties":{"intellectualEntityMetadata":{"$ref":"#/components/schemas/IntellectualEntityMetadataParam"},"representations":{"type":"array","items":{"$ref":"#/components/schemas/UpdateRepresentationMetadataParam"}}}},"UpdateRepresentationMetadataParam":{"type":"object","properties":{"representationId":{"type":"string","format":"uuid"},"representationMetadata":{"$ref":"#/components/schemas/RepresentationMetadataParam"},"files":{"type":"array","items":{"$ref":"#/components/schemas/UpdateFileMetadataParam"}}},"required":["representationId"]},"StatisticsEventResponse":{"type":"object","properties":{"id":{"type":"string","format":"uuid"},"eventType":{"type":"string","enum":["OBJECT_VIEW","FILE_DOWNLOAD","PROOF_REQUEST","OBJECT_DEPOSIT","OBJECT_VERSION_CREATE","OBJECT_METADATA_UPDATE","OBJECT_ACCESS_GRANTED","OBJECT_ACCESS_REVOKED"]},"objectId":{"type":"string","format":"uuid"},"objectVersion":{"type":"string"},"userId":{"type":"string"},"timestamp":{"type":"string","format":"date-time"}}},"VerifyPremisResult":{"type":"object","properties":{"success":{"type":"boolean"}}},"PresignedSourceFilesDownloadResponse":{"type":"object","properties":{"fileId":{"type":"string","format":"uuid"},"downloadUrl":{"type":"string","format":"uri"},"expiresAt":{"type":"string","format":"date-time"}},"required":["downloadUrl","expiresAt","fileId"]},"AclEntry":{"type":"object","properties":{"principal":{"$ref":"#/components/schemas/AclPrincipal"},"role":{"type":"string","enum":["SUPER_ADMIN","USER"]},"permissions":{"type":"array","items":{"type":"string","enum":["READ","WRITE","READ_SOURCE_FILE"]}}}},"AclPrincipal":{"type":"object","properties":{"type":{"type":"string","enum":["USER"]},"id":{"type":"string"}}},"Anchor":{"type":"object","properties":{"storageVersionId":{"type":"string"},"blockchainTxId":{"type":"string"},"anchoredAt":{"type":"string","format":"date-time"}},"required":["anchoredAt","blockchainTxId","storageVersionId"]},"CachedObjectMetadataResponse":{"type":"object","properties":{"objectId":{"type":"string","format":"uuid"},"premisMetadata":{"$ref":"#/components/schemas/PremisMetadata"},"descriptiveMetadata":{"type":"object","additionalProperties":{}},"acl":{"$ref":"#/components/schemas/ObjectAcl"}},"required":["objectId","premisMetadata"]},"ObjectAcl":{"type":"object","properties":{"objectId":{"type":"string","format":"uuid"},"entries":{"type":"array","items":{"$ref":"#/components/schemas/AclEntry"}}}},"PremisMetadata":{"type":"object","properties":{"originalName":{"type":"string"},"anchors":{"type":"array","items":{"$ref":"#/components/schemas/Anchor"}},"identifiers":{"type":"array","items":{"$ref":"#/components/schemas/ObjectIdentifier"}},"relationships":{"type":"array","items":{"$ref":"#/components/schemas/Relationship"}}}},"DescriptiveMetadataSchemaSummaryDto":{"type":"object","properties":{"id":{"type":"string","format":"uuid"},"entityType":{"type":"string","enum":["DATABASE","SCIENTIFIC_WORK"]},"active":{"type":"boolean"},"createdAt":{"type":"string","format":"date-time"},"updatedAt":{"type":"string","format":"date-time"}}},"DepositionJobStatusResponse":{"type":"object","properties":{"jobId":{"type":"string","format":"uuid"},"objectId":{"type":"string","format":"uuid"},"status":{"type":"string","enum":["UPLOADING","PROCESSING","COMPLETED","FAILED","CANCELLED"]},"createdAt":{"type":"string","format":"date-time"},"updatedAt":{"type":"string","format":"date-time"},"result":{"$ref":"#/components/schemas/DepositionResult"},"errorMessage":{"type":"string"}},"required":["createdAt","jobId","objectId","status","updatedAt"]}},"securitySchemes":{"bearerAuth":{"type":"http","scheme":"bearer","bearerFormat":"JWT"}}}}
+{
+  "openapi": "3.1.0",
+  "info": { "title": "OpenAPI definition", "version": "v0" },
+  "servers": [{ "url": "http://158.160.194.122", "description": "Generated server url" }],
+  "paths": {
+    "/objects/{objectId}/visibility": {
+      "put": {
+        "tags": ["object-visibility-controller"],
+        "operationId": "updateVisibility",
+        "parameters": [
+          {
+            "name": "objectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateObjectVisibilityRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DepositionResult" } }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/objects/{objectId}/descriptive-metadata": {
+      "put": {
+        "tags": ["object-controller"],
+        "operationId": "upsertDescriptiveMetadata",
+        "parameters": [
+          {
+            "name": "objectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          { "name": "entityType", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "string" } } },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": { "schema": { "type": "object", "additionalProperties": {} } }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/intellectual-entity-types/{id}": {
+      "get": {
+        "tags": ["intellectual-entity-type-controller"],
+        "operationId": "getById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/IntellectualEntityTypeDto" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      },
+      "put": {
+        "tags": ["intellectual-entity-type-controller"],
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/UpdateRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/IntellectualEntityTypeDto" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      },
+      "delete": {
+        "tags": ["intellectual-entity-type-controller"],
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": { "200": { "description": "OK" } },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/descriptive-metadata/schema/{schemaId}/active": {
+      "put": {
+        "tags": ["descriptive-metadata-schema-controller"],
+        "operationId": "updateActive",
+        "parameters": [
+          {
+            "name": "schemaId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/UpdateActiveRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DescriptiveMetadataSchemaDto" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/objects/{objectId}/rights-statement": {
+      "post": {
+        "tags": ["rights-statement-controller"],
+        "operationId": "upsertRightsStatement",
+        "parameters": [
+          {
+            "name": "objectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpsertRightsStatementRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DepositionResult" } }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/objects/{objectId}/events": {
+      "post": {
+        "tags": ["object-event-controller"],
+        "operationId": "recordEvent",
+        "parameters": [
+          {
+            "name": "objectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RecordObjectEventRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DepositionResult" } }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/objects/{objectId}/acl/users": {
+      "post": {
+        "tags": ["object-acl-controller"],
+        "operationId": "upsertUserAclEntry",
+        "parameters": [
+          {
+            "name": "objectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpsertObjectAclEntryRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DepositionResult" } }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/objects/search": {
+      "post": {
+        "tags": ["object-controller"],
+        "operationId": "searchObjects",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/ObjectSearchRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SearchObjectsResult" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/intellectual-entity-types": {
+      "get": {
+        "tags": ["intellectual-entity-type-controller"],
+        "operationId": "list",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/IntellectualEntityTypeDto" }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      },
+      "post": {
+        "tags": ["intellectual-entity-type-controller"],
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CreateRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/IntellectualEntityTypeDto" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/descriptive-metadata/schema": {
+      "post": {
+        "tags": ["descriptive-metadata-schema-controller"],
+        "operationId": "createSchema",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CreateSchemaRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DescriptiveMetadataSchemaDto" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/depone": {
+      "post": {
+        "tags": ["object-controller"],
+        "operationId": "depone",
+        "parameters": [
+          {
+            "name": "intellectualEntityType",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": { "$ref": "#/components/schemas/DeponeMultipartForm" },
+              "encoding": {
+                "request": { "contentType": "application/json" },
+                "files": { "contentType": "application/octet-stream" }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/DepositionResult" } } }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/depone/jobs": {
+      "get": {
+        "tags": ["deposition-job-controller"],
+        "summary": "List deposition jobs of current user (paginated)",
+        "operationId": "listMyJobs",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "0-based page index",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32", "default": 0, "minimum": 0 },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "page size",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20,
+              "maximum": 200,
+              "minimum": 1
+            },
+            "example": 20
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DepositionJobPage" } }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      },
+      "post": {
+        "tags": ["deposition-job-controller"],
+        "operationId": "createJob",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CreateJobRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CreateDepositionJobResult" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/depone/jobs/{jobId}/submit": {
+      "post": {
+        "tags": ["deposition-job-controller"],
+        "operationId": "submit",
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": { "200": { "description": "OK" } },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/objects/{objectId}/rights-statements/{rightsStatementId}": {
+      "patch": {
+        "tags": ["rights-statement-controller"],
+        "operationId": "updateRightsStatement",
+        "parameters": [
+          {
+            "name": "objectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "rightsStatementId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpsertRightsStatementRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DepositionResult" } }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/objects/{objectId}/metadata": {
+      "get": {
+        "tags": ["object-controller"],
+        "operationId": "getPremisMetadata",
+        "parameters": [
+          {
+            "name": "objectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          { "name": "versionId", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/xml": { "schema": { "type": "string", "format": "binary" } } }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      },
+      "patch": {
+        "tags": ["object-controller"],
+        "operationId": "updateMetadata",
+        "parameters": [
+          {
+            "name": "objectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateMetadataParams" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/DepositionResult" } } }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/users/search": {
+      "get": {
+        "tags": ["user-controller"],
+        "operationId": "searchUsers",
+        "parameters": [
+          {
+            "name": "searchQuery",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32", "default": 0 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/UserSummaryResponse" }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/statistics/events": {
+      "get": {
+        "tags": ["statistics-controller"],
+        "operationId": "getEvents",
+        "parameters": [
+          {
+            "name": "objectId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "eventType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "OBJECT_VIEW",
+                "FILE_DOWNLOAD",
+                "PROOF_REQUEST",
+                "OBJECT_DEPOSIT",
+                "OBJECT_VERSION_CREATE",
+                "OBJECT_METADATA_UPDATE",
+                "OBJECT_ACCESS_GRANTED",
+                "OBJECT_ACCESS_REVOKED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/StatisticsEventResponse" }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/objects/{objectId}/verify": {
+      "get": {
+        "tags": ["object-controller"],
+        "operationId": "verifyPremis",
+        "parameters": [
+          {
+            "name": "objectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          { "name": "versionId", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VerifyPremisResult" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/objects/{objectId}/source-files": {
+      "get": {
+        "tags": ["object-controller"],
+        "operationId": "downloadSourceFiles",
+        "parameters": [
+          {
+            "name": "objectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "fileId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "array", "items": { "type": "string", "format": "uuid" } }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/zip": { "schema": { "type": "string", "format": "binary" } } }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/objects/{objectId}/source-files/presigned": {
+      "get": {
+        "tags": ["object-controller"],
+        "operationId": "presignSourceFilesDownload",
+        "parameters": [
+          {
+            "name": "objectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "fileId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "array", "items": { "type": "string", "format": "uuid" } }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/PresignedSourceFilesDownloadResponse" }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/objects/{objectId}/cached-metadata": {
+      "get": {
+        "tags": ["object-controller"],
+        "operationId": "getCachedMetadata",
+        "parameters": [
+          {
+            "name": "objectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CachedObjectMetadataResponse" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/descriptive-metadata/schemas": {
+      "get": {
+        "tags": ["descriptive-metadata-schema-controller"],
+        "operationId": "getSchemas",
+        "parameters": [
+          {
+            "name": "entityType",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          { "name": "active", "in": "query", "required": false, "schema": { "type": "boolean" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/DescriptiveMetadataSchemaSummaryDto" }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/descriptive-metadata/schemas/{schemaId}": {
+      "get": {
+        "tags": ["descriptive-metadata-schema-controller"],
+        "operationId": "getSchemaById",
+        "parameters": [
+          {
+            "name": "schemaId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": { "schema": { "type": "object", "additionalProperties": {} } }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/depone/jobs/{jobId}": {
+      "get": {
+        "tags": ["deposition-job-controller"],
+        "operationId": "status",
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DepositionJobStatusResponse" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UpdateObjectVisibilityRequest": {
+        "type": "object",
+        "properties": { "visibility": { "type": "string", "enum": ["PUBLIC", "PRIVATE"] } },
+        "required": ["visibility"]
+      },
+      "DepositionResult": {
+        "type": "object",
+        "properties": {
+          "objectId": { "type": "string", "format": "uuid" },
+          "txId": { "type": "string" },
+          "versionId": { "type": "string" }
+        },
+        "required": ["objectId", "txId"]
+      },
+      "UpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "description": { "type": "string" }
+        },
+        "required": ["name"]
+      },
+      "IntellectualEntityTypeDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string", "minLength": 1 },
+          "description": { "type": "string" }
+        },
+        "required": ["id", "name"]
+      },
+      "UpdateActiveRequest": {
+        "type": "object",
+        "properties": { "active": { "type": "boolean" } },
+        "required": ["active"]
+      },
+      "DescriptiveMetadataSchemaDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "entityTypeName": { "type": "string" },
+          "schemaJson": { "type": "string" },
+          "active": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AgentDto": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "type": { "type": "string", "enum": ["HARDWARE", "ORGANIZATION", "PERSON", "SOFTWARE"] },
+          "identifiers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AgentIdentifier" }
+          }
+        },
+        "required": ["name", "type"]
+      },
+      "AgentGrant": {
+        "type": "object",
+        "properties": {
+          "agent": { "$ref": "#/components/schemas/AgentDto" },
+          "linkingAgentRoles": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["agent"]
+      },
+      "AgentIdentifier": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "enum": ["SYSTEM", "PUBLIC", "OTHER"] },
+          "value": { "type": "string" }
+        }
+      },
+      "ApplicableDates": {
+        "type": "object",
+        "properties": {
+          "startDate": { "type": "string", "format": "date-time" },
+          "endDate": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CopyrightInformation": {
+        "type": "object",
+        "properties": {
+          "copyrightStatus": { "type": "string" },
+          "copyrightJurisdiction": { "type": "string" },
+          "copyrightStatusDeterminationDate": { "type": "string", "format": "date" },
+          "copyrightNote": { "type": "array", "items": { "type": "string" } },
+          "documentationIdentifiers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DocumentationIdentifier" }
+          },
+          "applicableDates": { "$ref": "#/components/schemas/ApplicableDates" }
+        }
+      },
+      "DocumentationIdentifier": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string" },
+          "value": { "type": "string" },
+          "role": { "type": "string" }
+        }
+      },
+      "LicenseInformation": {
+        "type": "object",
+        "properties": {
+          "documentationIdentifiers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DocumentationIdentifier" }
+          },
+          "licenseTerms": { "type": "string" },
+          "licenseNote": { "type": "array", "items": { "type": "string" } },
+          "applicableDates": { "$ref": "#/components/schemas/ApplicableDates" }
+        }
+      },
+      "OtherRightsInformation": {
+        "type": "object",
+        "properties": {
+          "documentationIdentifiers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DocumentationIdentifier" }
+          },
+          "otherRightsBasis": { "type": "string" },
+          "applicableDates": { "$ref": "#/components/schemas/ApplicableDates" },
+          "otherRightsNote": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "RightsGranted": {
+        "type": "object",
+        "properties": {
+          "act": { "type": "string" },
+          "restriction": { "type": "array", "items": { "type": "string" } },
+          "termOfGrant": { "$ref": "#/components/schemas/ApplicableDates" },
+          "termOfRestriction": { "$ref": "#/components/schemas/ApplicableDates" },
+          "rightsGrantedNote": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "RightsStatementPayload": {
+        "type": "object",
+        "properties": {
+          "copyrightInformation": { "$ref": "#/components/schemas/CopyrightInformation" },
+          "licenseInformation": { "$ref": "#/components/schemas/LicenseInformation" },
+          "statuteInformation": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/StatuteInformation" }
+          },
+          "otherRightsInformation": { "$ref": "#/components/schemas/OtherRightsInformation" },
+          "rightsGranted": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/RightsGranted" }
+          }
+        }
+      },
+      "StatuteInformation": {
+        "type": "object",
+        "properties": {
+          "statuteJurisdiction": { "type": "string" },
+          "statuteCitation": { "type": "string" },
+          "statuteInformationDeterminationDate": { "type": "string", "format": "date" },
+          "statuteNote": { "type": "array", "items": { "type": "string" } },
+          "documentationIdentifiers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DocumentationIdentifier" }
+          },
+          "applicableDates": { "$ref": "#/components/schemas/ApplicableDates" }
+        }
+      },
+      "UpsertRightsStatementRequest": {
+        "type": "object",
+        "properties": {
+          "rightsStatementId": { "type": "string" },
+          "rightsBasis": { "type": "string", "enum": ["COPYRIGHT", "LICENSE", "STATUTE", "OTHER"] },
+          "payload": { "$ref": "#/components/schemas/RightsStatementPayload" },
+          "agents": { "type": "array", "items": { "$ref": "#/components/schemas/AgentGrant" } }
+        },
+        "required": ["rightsBasis"]
+      },
+      "EventDetailInformation": {
+        "type": "object",
+        "properties": { "detail": { "type": "string" } }
+      },
+      "EventOutcomeInformation": {
+        "type": "object",
+        "properties": {
+          "outcome": { "type": "string", "enum": ["SUCCESS", "FAILURE"] },
+          "outcomeDetail": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/EventOutcomeInformationDetail" }
+          }
+        }
+      },
+      "EventOutcomeInformationDetail": {
+        "type": "object",
+        "properties": { "eventOutcomeDetailNote": { "type": "string" } }
+      },
+      "RecordObjectEventRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "ACCESSION",
+              "CREATION",
+              "DEACCESSION",
+              "DELETION",
+              "METADATA_MODIFICATION",
+              "MIGRATION",
+              "OTHER"
+            ]
+          },
+          "detail": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/EventDetailInformation" }
+          },
+          "outcome": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/EventOutcomeInformation" }
+          }
+        },
+        "required": ["type"]
+      },
+      "UpsertObjectAclEntryRequest": {
+        "type": "object",
+        "properties": {
+          "userId": { "type": "string", "minLength": 1 },
+          "permissions": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["READ", "WRITE", "READ_SOURCE_FILE"] },
+            "uniqueItems": true
+          }
+        },
+        "required": ["permissions", "userId"]
+      },
+      "ObjectSearchRequest": {
+        "type": "object",
+        "properties": {
+          "searchQuery": { "type": "string" },
+          "offset": { "type": "integer", "format": "int32", "minimum": 0 },
+          "limit": { "type": "integer", "format": "int32", "maximum": 500, "minimum": 1 }
+        }
+      },
+      "Hit": {
+        "type": "object",
+        "properties": {
+          "objectId": { "type": "string", "format": "uuid" },
+          "intellectualEntityType": { "$ref": "#/components/schemas/IntellectualEntityType" },
+          "originalName": { "type": "string" }
+        },
+        "required": ["objectId"]
+      },
+      "IntellectualEntityType": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      },
+      "SearchObjectsResult": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer", "format": "int64" },
+          "hits": { "type": "array", "items": { "$ref": "#/components/schemas/Hit" } }
+        },
+        "required": ["hits"]
+      },
+      "CreateRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "description": { "type": "string" }
+        },
+        "required": ["name"]
+      },
+      "CreateSchemaRequest": {
+        "type": "object",
+        "properties": {
+          "entityTypeName": { "type": "string" },
+          "schemaJson": { "type": "string" }
+        },
+        "required": ["entityTypeName", "schemaJson"]
+      },
+      "DeponeMultipartForm": {
+        "type": "object",
+        "properties": {
+          "request": {
+            "$ref": "#/components/schemas/DeponeMultipartRequest",
+            "description": "JSON часть с метаданными"
+          },
+          "files": {
+            "type": "array",
+            "description": "Файлы для депонирования",
+            "items": { "type": "string", "format": "binary" }
+          }
+        }
+      },
+      "DeponeMultipartRequest": {
+        "type": "object",
+        "properties": {
+          "intellectualEntityMetadata": {
+            "$ref": "#/components/schemas/IntellectualEntityMetadataParam"
+          },
+          "descriptiveMetadata": { "type": "string" },
+          "representationMetadata": { "$ref": "#/components/schemas/RepresentationMetadataParam" },
+          "fileMetadata": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/FileMetadataParam" }
+          }
+        }
+      },
+      "FileMetadataParam": {
+        "type": "object",
+        "properties": { "originalName": { "type": "string", "minLength": 1 } },
+        "required": ["originalName"]
+      },
+      "IntellectualEntityMetadataParam": {
+        "type": "object",
+        "properties": {
+          "originalName": { "type": "string", "minLength": 1 },
+          "identifiers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ObjectIdentifier" }
+          },
+          "relationships": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Relationship" }
+          }
+        },
+        "required": ["originalName"]
+      },
+      "ObjectIdentifier": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "enum": ["SYSTEM", "OTHER"] },
+          "value": { "type": "string" }
+        }
+      },
+      "RelationEventIdentifier": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "enum": ["SYSTEM", "OTHER"] },
+          "value": { "type": "string" },
+          "sequence": { "type": "integer", "format": "int64" }
+        }
+      },
+      "RelationObjectIdentifier": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "enum": ["SYSTEM", "OTHER"] },
+          "value": { "type": "string" },
+          "sequence": { "type": "integer", "format": "int64" }
+        }
+      },
+      "Relationship": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "DEPENDENCY",
+              "DERIVATION",
+              "LOGICAL",
+              "REFERENCE",
+              "REPLACEMENT",
+              "STRUCTURAL"
+            ]
+          },
+          "subType": {
+            "type": "string",
+            "enum": [
+              "HAS_PART",
+              "INCLUDES",
+              "IS_INCLUDED_IN",
+              "IS_PART_OF",
+              "IS_REPRESENTED_BY",
+              "REPRESENTS",
+              "OTHER"
+            ]
+          },
+          "relatedObjects": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/RelationObjectIdentifier" }
+          },
+          "relatedEvents": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/RelationEventIdentifier" }
+          }
+        }
+      },
+      "RepresentationMetadataParam": {
+        "type": "object",
+        "properties": { "originalName": { "type": "string", "minLength": 1 } },
+        "required": ["originalName"]
+      },
+      "CreateJobRequest": {
+        "type": "object",
+        "properties": {
+          "intellectualEntityTypeName": { "type": "string" },
+          "intellectualEntityMetadata": {
+            "$ref": "#/components/schemas/IntellectualEntityMetadataParam"
+          },
+          "descriptiveMetadata": { "type": "string" },
+          "representations": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DepositionJobRepresentationUploadParam" },
+            "minItems": 1
+          }
+        },
+        "required": ["intellectualEntityTypeName", "representations"]
+      },
+      "DepositionJobFileUploadParam": {
+        "type": "object",
+        "properties": {
+          "originalName": { "type": "string" },
+          "contentType": { "type": "string" },
+          "sizeBytes": { "type": "integer", "format": "int64" }
+        },
+        "required": ["originalName"]
+      },
+      "DepositionJobRepresentationUploadParam": {
+        "type": "object",
+        "properties": {
+          "representationMetadata": { "$ref": "#/components/schemas/RepresentationMetadataParam" },
+          "files": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DepositionJobFileUploadParam" },
+            "minItems": 1
+          }
+        },
+        "required": ["files"]
+      },
+      "CreateDepositionJobResult": {
+        "type": "object",
+        "properties": {
+          "jobId": { "type": "string", "format": "uuid" },
+          "objectId": { "type": "string", "format": "uuid" },
+          "status": {
+            "type": "string",
+            "enum": ["UPLOADING", "PROCESSING", "COMPLETED", "FAILED", "CANCELLED"]
+          },
+          "uploads": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PresignedUpload" }
+          }
+        },
+        "required": ["jobId", "objectId", "status", "uploads"]
+      },
+      "PresignedUpload": {
+        "type": "object",
+        "properties": {
+          "fileId": { "type": "string", "format": "uuid" },
+          "contentLocation": { "type": "string", "format": "uri" },
+          "objectKey": { "type": "string" },
+          "uploadUrl": { "type": "string", "format": "uri" },
+          "expiresAt": { "type": "string", "format": "date-time" },
+          "requiredHeaders": { "type": "object", "additionalProperties": { "type": "string" } }
+        },
+        "required": [
+          "contentLocation",
+          "expiresAt",
+          "fileId",
+          "objectKey",
+          "requiredHeaders",
+          "uploadUrl"
+        ]
+      },
+      "UpdateFileMetadataParam": {
+        "type": "object",
+        "properties": {
+          "fileId": { "type": "string", "format": "uuid" },
+          "fileMetadata": { "$ref": "#/components/schemas/FileMetadataParam" }
+        },
+        "required": ["fileId"]
+      },
+      "UpdateMetadataParams": {
+        "type": "object",
+        "properties": {
+          "intellectualEntityMetadata": {
+            "$ref": "#/components/schemas/IntellectualEntityMetadataParam"
+          },
+          "representations": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/UpdateRepresentationMetadataParam" }
+          }
+        }
+      },
+      "UpdateRepresentationMetadataParam": {
+        "type": "object",
+        "properties": {
+          "representationId": { "type": "string", "format": "uuid" },
+          "representationMetadata": { "$ref": "#/components/schemas/RepresentationMetadataParam" },
+          "files": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/UpdateFileMetadataParam" }
+          }
+        },
+        "required": ["representationId"]
+      },
+      "UserSummaryResponse": {
+        "type": "object",
+        "properties": { "id": { "type": "string" }, "username": { "type": "string" } }
+      },
+      "StatisticsEventResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "eventType": {
+            "type": "string",
+            "enum": [
+              "OBJECT_VIEW",
+              "FILE_DOWNLOAD",
+              "PROOF_REQUEST",
+              "OBJECT_DEPOSIT",
+              "OBJECT_VERSION_CREATE",
+              "OBJECT_METADATA_UPDATE",
+              "OBJECT_ACCESS_GRANTED",
+              "OBJECT_ACCESS_REVOKED"
+            ]
+          },
+          "objectId": { "type": "string", "format": "uuid" },
+          "objectVersion": { "type": "string" },
+          "userId": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" }
+        }
+      },
+      "VerifyPremisResult": {
+        "type": "object",
+        "properties": { "success": { "type": "boolean" } }
+      },
+      "PresignedSourceFilesDownloadResponse": {
+        "type": "object",
+        "properties": {
+          "fileId": { "type": "string", "format": "uuid" },
+          "downloadUrl": { "type": "string", "format": "uri" },
+          "expiresAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["downloadUrl", "expiresAt", "fileId"]
+      },
+      "AclEntry": {
+        "type": "object",
+        "properties": {
+          "principal": { "$ref": "#/components/schemas/AclPrincipal" },
+          "role": { "type": "string", "enum": ["SUPER_ADMIN", "USER"] },
+          "permissions": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["READ", "WRITE", "READ_SOURCE_FILE"] }
+          }
+        }
+      },
+      "AclPrincipal": {
+        "type": "object",
+        "properties": { "type": { "type": "string", "enum": ["USER"] }, "id": { "type": "string" } }
+      },
+      "Anchor": {
+        "type": "object",
+        "properties": {
+          "storageVersionId": { "type": "string" },
+          "blockchainTxId": { "type": "string" },
+          "anchoredAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["anchoredAt", "blockchainTxId", "storageVersionId"]
+      },
+      "CachedObjectMetadataResponse": {
+        "type": "object",
+        "properties": {
+          "objectId": { "type": "string", "format": "uuid" },
+          "intellectualEntityType": { "$ref": "#/components/schemas/IntellectualEntityType" },
+          "visibility": { "type": "string", "enum": ["PUBLIC", "PRIVATE"] },
+          "premisMetadata": { "$ref": "#/components/schemas/PremisMetadata" },
+          "descriptiveMetadata": { "type": "object", "additionalProperties": {} },
+          "acl": { "$ref": "#/components/schemas/ObjectAcl" }
+        },
+        "required": ["intellectualEntityType", "objectId", "premisMetadata"]
+      },
+      "ObjectAcl": {
+        "type": "object",
+        "properties": {
+          "objectId": { "type": "string", "format": "uuid" },
+          "entries": { "type": "array", "items": { "$ref": "#/components/schemas/AclEntry" } }
+        }
+      },
+      "PremisMetadata": {
+        "type": "object",
+        "properties": {
+          "originalName": { "type": "string" },
+          "anchors": { "type": "array", "items": { "$ref": "#/components/schemas/Anchor" } },
+          "identifiers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ObjectIdentifier" }
+          },
+          "relationships": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Relationship" }
+          }
+        }
+      },
+      "DescriptiveMetadataSchemaSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "entityTypeName": { "type": "string" },
+          "active": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "DepositionJobListItem": {
+        "type": "object",
+        "properties": {
+          "jobId": { "type": "string", "format": "uuid" },
+          "objectId": { "type": "string", "format": "uuid" },
+          "objectName": { "type": "string" },
+          "intellectualEntityTypeName": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["UPLOADING", "PROCESSING", "COMPLETED", "FAILED", "CANCELLED"]
+          },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["createdAt", "jobId", "objectId", "status", "updatedAt"]
+      },
+      "DepositionJobPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DepositionJobListItem" }
+          },
+          "page": { "type": "integer", "format": "int32" },
+          "size": { "type": "integer", "format": "int32" },
+          "totalItems": { "type": "integer", "format": "int64" }
+        },
+        "required": ["items"]
+      },
+      "DepositionJobStatusResponse": {
+        "type": "object",
+        "properties": {
+          "jobId": { "type": "string", "format": "uuid" },
+          "objectId": { "type": "string", "format": "uuid" },
+          "status": {
+            "type": "string",
+            "enum": ["UPLOADING", "PROCESSING", "COMPLETED", "FAILED", "CANCELLED"]
+          },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "result": { "$ref": "#/components/schemas/DepositionResult" },
+          "errorMessage": { "type": "string" }
+        },
+        "required": ["createdAt", "jobId", "objectId", "status", "updatedAt"]
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    }
+  }
+}

@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Box, CircularProgress, Container, Stack, Typography } from '@mui/material';
 import { oidcUserManager } from '@shared/auth/oidc';
+import { isDebugEnabled } from '@shared/ui';
 
 export function AuthCallbackPage() {
   const [error, setError] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
+
+  const debug = isDebugEnabled();
 
   useEffect(() => {
     oidcUserManager
@@ -39,8 +42,15 @@ export function AuthCallbackPage() {
 
         {error && (
           <Alert severity="error">
-            Не удалось завершить вход: {error}
-            {errorDetails && (
+            Не удалось завершить вход. Попробуйте обновить страницу или повторить вход позже.
+
+            {debug && error && (
+              <Typography variant="caption" sx={{ display: 'block', mt: 1 }}>
+                Детали (debug): {error}
+              </Typography>
+            )}
+
+            {debug && errorDetails && (
               <Box component="pre" sx={{ whiteSpace: 'pre-wrap', mt: 1, mb: 0, fontSize: 12 }}>
                 {errorDetails}
               </Box>

@@ -22,6 +22,23 @@ function buildDevServer(options) {
         logLevel: 'warn',
       },
       {
+        // Ethereum JSON-RPC proxy for local development.
+        // Remote endpoint expects trailing slash: https://158.160.194.122/rpc/
+        context: ['/rpc', '/rpc/'],
+        target: 'https://158.160.194.122',
+        changeOrigin: true,
+        secure: false,
+        // Normalize any /rpc or /rpc/... to /rpc/...
+        pathRewrite: { '^/rpc/?': '/rpc/' },
+        // Remote nginx rejects requests when Origin is not allowed.
+        // Since we proxy server-to-server, strip browser Origin/Referer headers.
+        onProxyReq: (proxyReq) => {
+          proxyReq.removeHeader('origin');
+          proxyReq.removeHeader('referer');
+        },
+        logLevel: 'warn',
+      },
+      {
         context: ['/keycloak'],
         target: process.env.OIDC_PROXY_TARGET || 'https://158.160.194.122',
         changeOrigin: true,
