@@ -1,21 +1,25 @@
 # syntax=docker/dockerfile:1
 
-FROM node:20-alpine AS build
+FROM node:20-alpine AS runtime
+
 WORKDIR /app
 
-# Install dependencies
+# nginx is used to serve the built frontend after runtime build
+RUN apk add --no-cache nginx
+
+# Install dependencies once at image build time
 COPY package.json package-lock.json .npmrc ./
 RUN npm ci
 
-# Build
+# Copy application sources and runtime assets
 COPY . .
-RUN npm run build
 
-FROM nginx:1.27-alpine AS runtime
-WORKDIR /usr/share/nginx/html
-
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/dist/ /usr/share/nginx/html/
+# nginx configuration and startup script
+COPY nginx.conf /etc/nginx/http.d/default.conf
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 EXPOSE 80
+
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
