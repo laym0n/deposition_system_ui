@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import {
   Alert,
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
@@ -19,10 +20,10 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import type { DepositionJobListItem } from '@shared/api';
-import { listIntellectualEntityTypes, listMyDeponeJobs } from '@shared/api';
+import { listIntellectualEntityTypes, listMyDeponeJobs, submitDeponeJob } from '@shared/api';
 import { isDebugEnabled, toUserFacingError } from '@shared/ui';
 
 function maskId(id: string, left = 8, right = 6) {
@@ -67,12 +68,14 @@ function statusColor(status: DepositionJobListItem['status']): 'default' | 'succ
 
 export function JobsPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const debug = isDebugEnabled();
 
   // Server-side pagination
   const [page, setPage] = useState(1); // UI is 1-based
   const [pageSize, setPageSize] = useState(10);
+  const [retryError, setRetryError] = useState<string | null>(null);
 
   const jobsQuery = useQuery({
     queryKey: ['depone', 'jobs', 'me', { page, pageSize }],
@@ -85,6 +88,20 @@ export function JobsPage() {
     queryKey: ['intellectual-entity-types', 'list'],
     queryFn: () => listIntellectualEntityTypes(),
     staleTime: 60_000,
+  });
+
+  const retrySubmitMutation = useMutation({
+    mutationFn: async (jobId: string) => submitDeponeJob(jobId),
+    onMutate: () => {
+      setRetryError(null);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['depone', 'jobs', 'me'] });
+    },
+    onError: (error) => {
+      const e = toUserFacingError(error);
+      setRetryError(`${e.title}${e.description ? `: ${e.description}` : ''}${debug && error instanceof Error ? ` (debug: ${error.message})` : ''}`);
+    },
   });
 
   const entityTypeDescriptionByName = useMemo(() => {
@@ -107,15 +124,25 @@ export function JobsPage() {
   const pagesCount = Math.max(1, Math.ceil(totalItems / pageSize));
   const pageSafe = Math.min(page, pagesCount);
 
+  function isObjectPageAvailable(status: DepositionJobListItem['status']) {
+    return status === 'COMPLETED';
+  }
+
+  function canRetry(status: DepositionJobListItem['status']) {
+    return status === 'FAILED' || status === 'CANCELLED';
+  }
+
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Stack spacing={2.5}>
         <Box>
           <Typography variant="h5">Мои депонирования</Typography>
           <Typography variant="body2" color="text.secondary">
-            История ваших депонирований. Нажмите на запись, чтобы открыть объект.
+            История ваших депонирований. Успешные записи можно открыть как объект, а неуспешные — отправить на повторную обработку.
           </Typography>
         </Box>
+
+        {retryError && <Alert severity="error">{retryError}</Alert>}
 
         {jobsQuery.isLoading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -174,20 +201,46 @@ export function JobsPage() {
                   {jobs.map((job) => (
                     <ListItem key={job.jobId} divider disablePadding>
                       <ListItemButton
-                        onClick={() =>
-                          void navigate({
-                            to: '/objects/$objectId',
-                            params: { objectId: job.objectId },
-                          })
+                        onClick={
+                          isObjectPageAvailable(job.status)
+                            ? () => {
+                                void navigate({
+                                  to: '/objects/$objectId',
+                                  params: { objectId: job.objectId },
+                                });
+                              }
+                            : undefined
                         }
+                        sx={!isObjectPageAvailable(job.status) ? { cursor: 'default' } : undefined}
                       >
                         <ListItemText
                           primary={
-                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ alignItems: { sm: 'center' } }}>
-                              <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                                {job.objectName?.trim() || 'Без названия'}
-                              </Typography>
-                              <Chip size="small" label={statusLabel(job.status)} color={statusColor(job.status)} />
+                            <Stack
+                              direction={{ xs: 'column', sm: 'row' }}
+                              spacing={1}
+                              sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between' }}
+                            >
+                              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ alignItems: { sm: 'center' } }}>
+                                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                                  {job.objectName?.trim() || 'Без названия'}
+                                </Typography>
+                                <Chip size="small" label={statusLabel(job.status)} color={statusColor(job.status)} />
+                              </Stack>
+
+                              {canRetry(job.status) && (
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  disabled={retrySubmitMutation.isPending}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setRetryError(null);
+                                    retrySubmitMutation.mutate(job.jobId);
+                                  }}
+                                >
+                                  {retrySubmitMutation.isPending ? 'Отправка…' : 'Попробовать снова'}
+                                </Button>
+                              )}
                             </Stack>
                           }
                           secondary={

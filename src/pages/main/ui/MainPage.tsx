@@ -107,7 +107,7 @@ export function MainPage() {
                           </Typography>
                         </Stack>
                         <Typography variant="body2" color="text.secondary">
-                          Запустите асинхронное депонирование: загрузка материалов и отправка метаданных.
+                          Запустите депонирование: загрузка материалов и отправка метаданных.
                         </Typography>
                         <Box>
                           <Button size="small" variant="contained" disabled={!canUsePrivateFeatures}>

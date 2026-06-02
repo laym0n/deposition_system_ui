@@ -39,12 +39,38 @@ import { isDebugEnabled, toUserFacingError } from '@shared/ui';
 type CreateJobRequest = components['schemas']['CreateJobRequest'];
 type CreateDepositionJobResult = components['schemas']['CreateDepositionJobResult'];
 type PresignedUpload = components['schemas']['PresignedUpload'];
+type Relationship = components['schemas']['Relationship'];
 
 type RepresentationDraft = {
   id: string;
   originalName: string;
   files: File[];
 };
+
+type RelationshipDraft = {
+  type: NonNullable<Relationship['type']>;
+  subType: NonNullable<Relationship['subType']>;
+  objectId: string;
+};
+
+const RELATIONSHIP_TYPE_OPTIONS: Array<NonNullable<Relationship['type']>> = [
+  'DEPENDENCY',
+  'DERIVATION',
+  'LOGICAL',
+  'REFERENCE',
+  'REPLACEMENT',
+  'STRUCTURAL',
+];
+
+const RELATIONSHIP_SUBTYPE_OPTIONS: Array<NonNullable<Relationship['subType']>> = [
+  'HAS_PART',
+  'INCLUDES',
+  'IS_INCLUDED_IN',
+  'IS_PART_OF',
+  'IS_REPRESENTED_BY',
+  'REPRESENTS',
+  'OTHER',
+];
 
 type UploadProgress = {
   fileName: string;
@@ -137,6 +163,7 @@ export function DepositionAsyncPage() {
   const [entityTypeName, setEntityTypeName] = useState<string>('');
   const [premisOriginalName, setPremisOriginalName] = useState<string>('');
   const [premisIdentifiers, setPremisIdentifiers] = useState<Array<{ type: 'SYSTEM' | 'OTHER'; value: string }>>([]);
+  const [relationships, setRelationships] = useState<RelationshipDraft[]>([]);
   const [descriptiveMetadataValue, setDescriptiveMetadataValue] = useState<Record<string, unknown>>({});
   const [representations, setRepresentations] = useState<RepresentationDraft[]>([
     { id: crypto.randomUUID(), originalName: 'representation-1', files: [] },
@@ -219,11 +246,20 @@ export function DepositionAsyncPage() {
 
     setIsSubmitting(true);
     try {
+      const relationshipItems: NonNullable<CreateJobRequest['intellectualEntityMetadata']>['relationships'] = relationships
+        .filter((item) => item.objectId.trim().length > 0)
+        .map((item) => ({
+          type: item.type,
+          subType: item.subType,
+          relatedObjects: [{ type: 'SYSTEM', value: item.objectId.trim() }],
+        }));
+
       const intellectualEntityMetadata: CreateJobRequest['intellectualEntityMetadata'] = {
         originalName: premisOriginalName || nonEmptyReps[0]?.originalName || 'object',
         identifiers: premisIdentifiers
           .filter((x) => x.value.trim().length > 0)
           .map((x) => ({ type: x.type, value: x.value })),
+        relationships: relationshipItems,
       };
 
       const body: CreateJobRequest = {
@@ -307,7 +343,7 @@ export function DepositionAsyncPage() {
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Stack spacing={2.5}>
         <Box>
-          <Typography variant="h5">Асинхронное депонирование</Typography>
+          <Typography variant="h5">Депонирование</Typography>
           <Typography variant="body2" color="text.secondary">
             Создайте депонирование, загрузите файлы по выданным ссылкам и отправьте депонирование на обработку.
           </Typography>
@@ -487,23 +523,6 @@ export function DepositionAsyncPage() {
                   onChange={(next) => setDescriptiveMetadataValue((next ?? {}) as Record<string, unknown>)}
                 />
               )}
-
-              <Accordion disableGutters elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography variant="body2">Показать JSON (для диагностики)</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  {debug ? (
-                    <Box component="pre" sx={{ whiteSpace: 'pre-wrap', fontSize: 12, m: 0 }}>
-                      {JSON.stringify(descriptiveMetadataValue, null, 2)}
-                    </Box>
-                  ) : (
-                    <Alert severity="info" sx={{ mb: 0 }}>
-                      JSON доступен только в режиме debug.
-                    </Alert>
-                  )}
-                </AccordionDetails>
-              </Accordion>
             </Stack>
           </CardContent>
         </Card>
@@ -511,7 +530,100 @@ export function DepositionAsyncPage() {
         <Card variant="outlined">
           <CardContent>
             <Stack spacing={2}>
-              <Typography variant="subtitle1">3) Представления (репрезентации) и файлы</Typography>
+              <Typography variant="subtitle1">3) Связи с объектами</Typography>
+
+              <Stack spacing={1.5}>
+                {relationships.map((relationship, idx) => (
+                  <Stack
+                    key={idx}
+                    direction={{ xs: 'column', sm: 'row' }}
+                    spacing={1.5}
+                    sx={{ alignItems: { sm: 'center' } }}
+                  >
+                    <FormControl sx={{ minWidth: 180 }} size="small">
+                      <InputLabel id={`relationship-type-${idx}`}>Вид связи</InputLabel>
+                      <Select
+                        labelId={`relationship-type-${idx}`}
+                        label="Вид связи"
+                        value={relationship.type}
+                        onChange={(e) => {
+                          const value = e.target.value as NonNullable<Relationship['type']>;
+                          setRelationships((prev) => prev.map((item, i) => (i === idx ? { ...item, type: value } : item)));
+                        }}
+                        disabled={isSubmitting}
+                      >
+                        {RELATIONSHIP_TYPE_OPTIONS.map((option) => (
+                          <MenuItem key={option} value={option}>
+                            {option}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <FormControl sx={{ minWidth: 220 }} size="small">
+                      <InputLabel id={`relationship-subtype-${idx}`}>Подтип связи</InputLabel>
+                      <Select
+                        labelId={`relationship-subtype-${idx}`}
+                        label="Подтип связи"
+                        value={relationship.subType}
+                        onChange={(e) => {
+                          const value = e.target.value as NonNullable<Relationship['subType']>;
+                          setRelationships((prev) => prev.map((item, i) => (i === idx ? { ...item, subType: value } : item)));
+                        }}
+                        disabled={isSubmitting}
+                      >
+                        {RELATIONSHIP_SUBTYPE_OPTIONS.map((option) => (
+                          <MenuItem key={option} value={option}>
+                            {option}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <TextField
+                      label="ID связанного объекта"
+                      value={relationship.objectId}
+                      onChange={(e) =>
+                        setRelationships((prev) =>
+                          prev.map((item, i) => (i === idx ? { ...item, objectId: e.target.value } : item)),
+                        )
+                      }
+                      fullWidth
+                      size="small"
+                      disabled={isSubmitting}
+                    />
+
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      size="small"
+                      disabled={isSubmitting}
+                      onClick={() => setRelationships((prev) => prev.filter((_, i) => i !== idx))}
+                    >
+                      Удалить
+                    </Button>
+                  </Stack>
+                ))}
+
+                <Box>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    disabled={isSubmitting}
+                    onClick={() => setRelationships((prev) => [...prev, { type: 'STRUCTURAL', subType: 'HAS_PART', objectId: '' }])}
+                  >
+                    Добавить связь
+                  </Button>
+                </Box>
+              </Stack>
+            </Stack>
+          </CardContent>
+        </Card>
+
+        <Card variant="outlined">
+          <CardContent>
+            <Stack spacing={2}>
+              <Typography variant="subtitle1">4) Представления и файлы</Typography>
 
               <Stack spacing={2}>
                 {representations.map((rep, idx) => (
@@ -545,7 +657,6 @@ export function DepositionAsyncPage() {
                           fullWidth
                           size="small"
                           disabled={isSubmitting}
-                          helperText="representations[].representationMetadata.originalName"
                         />
 
                         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: { sm: 'center' } }}>
@@ -693,27 +804,6 @@ export function DepositionAsyncPage() {
                       <b>status:</b> {result.status}
                     </Typography>
                   </Stack>
-
-                  <Accordion
-                    disableGutters
-                    elevation={0}
-                    sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, '&:before': { display: 'none' } }}
-                  >
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography variant="body2">Показать полный ответ API (для диагностики)</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      {debug ? (
-                        <Box component="pre" sx={{ whiteSpace: 'pre-wrap', fontSize: 12, m: 0 }}>
-                          {JSON.stringify(result, null, 2)}
-                        </Box>
-                      ) : (
-                        <Alert severity="info" sx={{ mb: 0 }}>
-                          Полный ответ API доступен только в режиме debug.
-                        </Alert>
-                      )}
-                    </AccordionDetails>
-                  </Accordion>
                 </Stack>
               </CardContent>
             </Card>
