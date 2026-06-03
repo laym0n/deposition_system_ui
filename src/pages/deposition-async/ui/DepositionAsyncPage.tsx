@@ -4,6 +4,7 @@ import {
   AccordionDetails,
   AccordionSummary,
   Alert,
+  Autocomplete,
   Box,
   Button,
   Card,
@@ -30,6 +31,7 @@ import {
   getDescriptiveMetadataJsonSchema,
   getDescriptiveMetadataSchemas,
   listIntellectualEntityTypes,
+  searchObjects,
   submitDeponeJob,
 } from '@shared/api';
 import type { JsonSchema } from '@shared/ui';
@@ -40,6 +42,7 @@ type CreateJobRequest = components['schemas']['CreateJobRequest'];
 type CreateDepositionJobResult = components['schemas']['CreateDepositionJobResult'];
 type PresignedUpload = components['schemas']['PresignedUpload'];
 type Relationship = components['schemas']['Relationship'];
+type ObjectSearchHit = components['schemas']['Hit'];
 
 type RepresentationDraft = {
   id: string;
@@ -51,6 +54,8 @@ type RelationshipDraft = {
   type: NonNullable<Relationship['type']>;
   subType: NonNullable<Relationship['subType']>;
   objectId: string;
+  objectQuery: string;
+  objectLabel: string;
 };
 
 const RELATIONSHIP_TYPE_OPTIONS: Array<NonNullable<Relationship['type']>> = [
@@ -79,6 +84,91 @@ type UploadProgress = {
   status: 'PENDING' | 'UPLOADING' | 'DONE' | 'FAILED';
   error?: string;
 };
+
+function getObjectOptionLabel(option: Pick<ObjectSearchHit, 'objectId' | 'originalName'>): string {
+  return option.originalName?.trim() || option.objectId;
+}
+
+function RelationshipObjectAutocomplete(props: {
+  value: RelationshipDraft;
+  disabled: boolean;
+  onChange: (next: RelationshipDraft) => void;
+}) {
+  const { value, disabled, onChange } = props;
+
+  const searchQuery = value.objectQuery.trim();
+  const objectsQuery = useQuery({
+    queryKey: ['objects', 'search', 'relationship-picker', { q: searchQuery }],
+    queryFn: async () =>
+      searchObjects({
+        searchQuery,
+        offset: 0,
+        limit: 10,
+      }),
+    enabled: searchQuery.length >= 2,
+    staleTime: 10_000,
+  });
+
+  const options = objectsQuery.data?.hits ?? [];
+  const selectedValue =
+    value.objectId || value.objectLabel
+      ? {
+          objectId: value.objectId,
+          originalName: value.objectLabel || value.objectQuery || value.objectId,
+        }
+      : null;
+
+  return (
+    <Autocomplete
+      options={options}
+      value={selectedValue}
+      inputValue={value.objectQuery}
+      onInputChange={(_, nextInputValue, reason) => {
+        if (reason === 'reset') return;
+
+        onChange({
+          ...value,
+          objectQuery: nextInputValue,
+          objectId: reason === 'input' ? '' : value.objectId,
+          objectLabel: reason === 'input' ? '' : value.objectLabel,
+        });
+      }}
+      onChange={(_, nextValue) => {
+        onChange({
+          ...value,
+          objectId: nextValue?.objectId ?? '',
+          objectLabel: nextValue ? getObjectOptionLabel(nextValue) : '',
+          objectQuery: nextValue ? getObjectOptionLabel(nextValue) : '',
+        });
+      }}
+      getOptionLabel={(option) => getObjectOptionLabel(option)}
+      isOptionEqualToValue={(option, selected) => option.objectId === selected.objectId}
+      loading={objectsQuery.isLoading}
+      disabled={disabled}
+      noOptionsText={searchQuery.length < 2 ? 'Введите минимум 2 символа' : 'Ничего не найдено'}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label="Связанный объект"
+          size="small"
+        />
+      )}
+      renderOption={(optionProps, option) => (
+        <Box component="li" {...optionProps} key={option.objectId}>
+          <Stack spacing={0.25} sx={{ minWidth: 0 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
+              {getObjectOptionLabel(option)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" noWrap>
+              {option.intellectualEntityType?.description ?? option.intellectualEntityType?.name ?? 'Объект'} • ID: {option.objectId}
+            </Typography>
+          </Stack>
+        </Box>
+      )}
+      fullWidth
+    />
+  );
+}
 
 async function uploadToPresignedUrl(params: {
   file: File;
@@ -383,7 +473,7 @@ export function DepositionAsyncPage() {
                   >
                     {entityTypes.map((t) => (
                       <MenuItem key={t.id} value={t.name}>
-                        {t.name}
+                        {t.description}
                       </MenuItem>
                     ))}
                   </Select>
@@ -580,17 +670,12 @@ export function DepositionAsyncPage() {
                       </Select>
                     </FormControl>
 
-                    <TextField
-                      label="ID связанного объекта"
-                      value={relationship.objectId}
-                      onChange={(e) =>
-                        setRelationships((prev) =>
-                          prev.map((item, i) => (i === idx ? { ...item, objectId: e.target.value } : item)),
-                        )
-                      }
-                      fullWidth
-                      size="small"
+                    <RelationshipObjectAutocomplete
+                      value={relationship}
                       disabled={isSubmitting}
+                      onChange={(nextRelationship) =>
+                        setRelationships((prev) => prev.map((item, i) => (i === idx ? nextRelationship : item)))
+                      }
                     />
 
                     <Button
@@ -610,7 +695,12 @@ export function DepositionAsyncPage() {
                     variant="outlined"
                     size="small"
                     disabled={isSubmitting}
-                    onClick={() => setRelationships((prev) => [...prev, { type: 'STRUCTURAL', subType: 'HAS_PART', objectId: '' }])}
+                    onClick={() =>
+                      setRelationships((prev) => [
+                        ...prev,
+                        { type: 'STRUCTURAL', subType: 'HAS_PART', objectId: '', objectQuery: '', objectLabel: '' },
+                      ])
+                    }
                   >
                     Добавить связь
                   </Button>

@@ -30,20 +30,18 @@ import {
   Stack,
   TextField,
   Tooltip,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useQuery } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams } from '@tanstack/react-router';
+import { useNavigate, useParams } from '@tanstack/react-router';
 import type { components } from '@shared/api/generated/api-types';
 import { fetchJson } from '@shared/api/fetchJson';
 import { fetchText } from '@shared/api/fetchText';
 import { getStatisticsEvents } from '@shared/api/statistics';
-import { getDescriptiveMetadataSchemas, getDescriptiveMetadataJsonSchema, upsertObjectDescriptiveMetadata } from '@shared/api';
+import { getDescriptiveMetadataSchemas, getDescriptiveMetadataJsonSchema, searchObjects, upsertObjectDescriptiveMetadata } from '@shared/api';
 import { searchUsers, upsertUserAclEntry } from '@shared/api';
 import { updateObjectVisibility } from '@shared/api';
 import { upsertRightsStatement } from '@shared/api';
@@ -152,6 +150,7 @@ type Anchor = components['schemas']['Anchor'];
 type StatisticsEvent = components['schemas']['StatisticsEventResponse'];
 
 type StatisticsEventType = NonNullable<StatisticsEvent['eventType']>;
+type SearchHit = components['schemas']['Hit'];
 
 const EVENT_TYPE_LABEL: Record<string, string> = {
   OBJECT_VIEW: 'Просмотры объекта',
@@ -174,6 +173,7 @@ const VISIBILITY_LABEL: Record<ObjectVisibility, string> = {
 type RightsBasis = components['schemas']['UpsertRightsStatementRequest']['rightsBasis'];
 type RightsStatementPayload = components['schemas']['RightsStatementPayload'];
 type AgentGrant = components['schemas']['AgentGrant'];
+type PremisRelationship = components['schemas']['Relationship'];
 
 type RecordObjectEventRequest = components['schemas']['RecordObjectEventRequest'];
 type ObjectEventType = RecordObjectEventRequest['type'];
@@ -195,6 +195,8 @@ const RIGHTS_BASIS_LABEL: Record<RightsBasis, string> = {
   STATUTE: 'Закон / нормативный акт',
   OTHER: 'Другое',
 };
+
+const REPRESENTATION_RELATION_SUBTYPES: Array<NonNullable<PremisRelationship['subType']>> = ['IS_REPRESENTED_BY', 'REPRESENTS'];
 
 function toStringArray(input: string): string[] {
   return input
@@ -340,6 +342,83 @@ function sortAnchors(anchors: Anchor[]) {
   return [...anchors].sort((a, b) => String(b.anchoredAt).localeCompare(String(a.anchoredAt)));
 }
 
+function isObjectToObjectRelationship(relationship: PremisRelationship): boolean {
+  const subType = relationship.subType;
+  if (subType && REPRESENTATION_RELATION_SUBTYPES.includes(subType)) return false;
+  return (relationship.relatedObjects ?? []).length > 0;
+}
+
+function RelationshipObjectReference(props: { identifierType?: string; identifierValue?: string }) {
+  const { identifierType, identifierValue } = props;
+  const navigate = useNavigate();
+
+  const isSystemIdentifier = identifierType === 'SYSTEM' && Boolean(identifierValue?.trim());
+  const searchQuery = useQuery({
+    queryKey: ['objects', 'search', 'relationship-reference', identifierValue],
+    queryFn: async () =>
+      searchObjects({
+        searchQuery: identifierValue?.trim(),
+        offset: 0,
+        limit: 10,
+      }),
+    enabled: isSystemIdentifier,
+    staleTime: 30_000,
+  });
+
+  const hit: SearchHit | null = useMemo(() => {
+    const hits = searchQuery.data?.hits ?? [];
+    if (!identifierValue) return null;
+    return hits.find((item) => item.objectId === identifierValue) ?? hits[0] ?? null;
+  }, [identifierValue, searchQuery.data]);
+
+  if (!isSystemIdentifier) {
+    return (
+      <Typography variant="caption" color="text.secondary">
+        {identifierType ?? 'OTHER'}: {identifierValue ?? '—'}
+      </Typography>
+    );
+  }
+
+  if (searchQuery.isLoading) {
+    return (
+      <Typography variant="caption" color="text.secondary">
+        SYSTEM: {identifierValue} — ищу объект…
+      </Typography>
+    );
+  }
+
+  if (!hit) {
+    return (
+      <Typography variant="caption" color="text.secondary">
+        SYSTEM: {identifierValue}
+      </Typography>
+    );
+  }
+
+  return (
+    <Button
+      variant="text"
+      size="small"
+      sx={{ justifyContent: 'flex-start', px: 0, minWidth: 0, textTransform: 'none' }}
+      onClick={() =>
+        void navigate({
+          to: '/objects/$objectId',
+          params: { objectId: hit.objectId },
+        })
+      }
+    >
+      <Stack spacing={0.25} sx={{ alignItems: 'flex-start', minWidth: 0 }}>
+        <Typography variant="caption" sx={{ fontWeight: 600 }} noWrap>
+          {hit.originalName?.trim() || hit.objectId}
+        </Typography>
+        <Typography variant="caption" color="text.secondary" noWrap>
+          {hit.intellectualEntityType?.description ?? hit.intellectualEntityType?.name ?? 'Объект'} • ID: {hit.objectId}
+        </Typography>
+      </Stack>
+    </Button>
+  );
+}
+
 async function getCachedMetadata(objectId: string) {
   return fetchJson<CachedObjectMetadataResponse>(`/objects/${objectId}/cached-metadata`, {
     method: 'GET',
@@ -392,6 +471,7 @@ async function getPremisMetadataXmlForVersion(params: { objectId: string; versio
 }
 
 export function ObjectPage() {
+  const navigate = useNavigate();
   const { objectId } = useParams({ from: '/objects/$objectId/edit' });
 
   const debug = isDebugEnabled();
@@ -468,6 +548,7 @@ export function ObjectPage() {
   const originalName = data?.premisMetadata?.originalName;
   const anchors = sortAnchors(data?.premisMetadata?.anchors ?? []);
   const descriptive = data?.descriptiveMetadata ?? null;
+  const relationships = (data?.premisMetadata?.relationships ?? []).filter(isObjectToObjectRelationship);
   const latestAnchor = anchors[0];
   const visibility = data?.visibility ?? 'PRIVATE';
 
@@ -516,19 +597,13 @@ export function ObjectPage() {
   const [statuteCitation, setStatuteCitation] = useState('');
   const [statuteDeterminationDate, setStatuteDeterminationDate] = useState('');
   const [statuteNote, setStatuteNote] = useState('');
-
-  // Advanced mode raw JSON (optional)
-  const [rightsPayloadJson, setRightsPayloadJson] = useState<string>('');
-  const [rightsAgentsJson, setRightsAgentsJson] = useState<string>('');
   const [rightsError, setRightsError] = useState<string | null>(null);
 
   // Object event editor
-  const [eventSimpleMode, setEventSimpleMode] = useState(true);
   const [eventType, setEventType] = useState<ObjectEventType>('OTHER');
   const [eventDetail, setEventDetail] = useState('');
   const [eventOutcome, setEventOutcome] = useState<EventOutcome | ''>('');
   const [eventOutcomeNote, setEventOutcomeNote] = useState('');
-  const [eventAdvancedJson, setEventAdvancedJson] = useState('');
   const [eventError, setEventError] = useState<string | null>(null);
 
   const systemSourceFiles = useMemo(() => {
@@ -637,74 +712,62 @@ export function ObjectPage() {
   const upsertRightsMutation = useMutation({
     mutationFn: async () => {
       let payload: RightsStatementPayload | undefined;
-      let agents: AgentGrant[] | undefined;
+      const agents: AgentGrant[] | undefined = undefined;
 
-      if (rightsSimpleMode) {
-        // Build payload from simple fields.
-        payload = {};
+      payload = {};
 
-        if (rightsBasis === 'COPYRIGHT') {
-          payload.copyrightInformation = {
-            copyrightStatus: copyrightStatus.trim() || undefined,
-            copyrightJurisdiction: copyrightJurisdiction.trim() || undefined,
-            copyrightStatusDeterminationDate: toOptionalIsoDate(copyrightStatusDeterminationDate),
-            copyrightNote: toStringArray(copyrightNote),
-          };
-        }
-
-        if (rightsBasis === 'LICENSE') {
-          payload.licenseInformation = {
-            licenseTerms: licenseTerms.trim() || undefined,
-            licenseNote: toStringArray(licenseNote),
-          };
-        }
-
-        if (rightsBasis === 'STATUTE') {
-          payload.statuteInformation = [
-            {
-              statuteJurisdiction: statuteJurisdiction.trim() || undefined,
-              statuteCitation: statuteCitation.trim() || undefined,
-              statuteInformationDeterminationDate: toOptionalIsoDate(statuteDeterminationDate),
-              statuteNote: toStringArray(statuteNote),
-            },
-          ];
-        }
-
-        if (rightsBasis === 'OTHER') {
-          payload.otherRightsInformation = {
-            otherRightsBasis: otherRightsBasis.trim() || undefined,
-            otherRightsNote: toStringArray(otherRightsNote),
-          };
-        }
-
-        // Remove empty sections to avoid sending noisy payload.
-        const prune = (obj: Record<string, unknown>) => {
-          for (const k of Object.keys(obj)) {
-            const v = obj[k];
-            if (v === undefined) {
-              delete obj[k];
-              continue;
-            }
-            if (Array.isArray(v) && v.length === 0) {
-              delete obj[k];
-              continue;
-            }
-            if (v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v as object).length === 0) {
-              delete obj[k];
-              continue;
-            }
-          }
+      if (rightsBasis === 'COPYRIGHT') {
+        payload.copyrightInformation = {
+          copyrightStatus: copyrightStatus.trim() || undefined,
+          copyrightJurisdiction: copyrightJurisdiction.trim() || undefined,
+          copyrightStatusDeterminationDate: toOptionalIsoDate(copyrightStatusDeterminationDate),
+          copyrightNote: toStringArray(copyrightNote),
         };
-        prune(payload as unknown as Record<string, unknown>);
-      } else {
-        // Advanced mode: JSON input.
-        if (rightsPayloadJson.trim()) {
-          payload = JSON.parse(rightsPayloadJson) as RightsStatementPayload;
-        }
-        if (rightsAgentsJson.trim()) {
-          agents = JSON.parse(rightsAgentsJson) as AgentGrant[];
-        }
       }
+
+      if (rightsBasis === 'LICENSE') {
+        payload.licenseInformation = {
+          licenseTerms: licenseTerms.trim() || undefined,
+          licenseNote: toStringArray(licenseNote),
+        };
+      }
+
+      if (rightsBasis === 'STATUTE') {
+        payload.statuteInformation = [
+          {
+            statuteJurisdiction: statuteJurisdiction.trim() || undefined,
+            statuteCitation: statuteCitation.trim() || undefined,
+            statuteInformationDeterminationDate: toOptionalIsoDate(statuteDeterminationDate),
+            statuteNote: toStringArray(statuteNote),
+          },
+        ];
+      }
+
+      if (rightsBasis === 'OTHER') {
+        payload.otherRightsInformation = {
+          otherRightsBasis: otherRightsBasis.trim() || undefined,
+          otherRightsNote: toStringArray(otherRightsNote),
+        };
+      }
+
+      const prune = (obj: Record<string, unknown>) => {
+        for (const k of Object.keys(obj)) {
+          const v = obj[k];
+          if (v === undefined) {
+            delete obj[k];
+            continue;
+          }
+          if (Array.isArray(v) && v.length === 0) {
+            delete obj[k];
+            continue;
+          }
+          if (v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v as object).length === 0) {
+            delete obj[k];
+            continue;
+          }
+        }
+      };
+      prune(payload as unknown as Record<string, unknown>);
 
       return upsertRightsStatement(objectId, {
         rightsStatementId: selectedExistingRightsId.trim() || rightsStatementId.trim() ? (selectedExistingRightsId.trim() || rightsStatementId.trim()) : undefined,
@@ -727,21 +790,16 @@ export function ObjectPage() {
 
   const recordEventMutation = useMutation({
     mutationFn: async () => {
-      let body: RecordObjectEventRequest;
-      if (eventSimpleMode) {
-        const detail = eventDetail.trim() ? [{ detail: eventDetail.trim() }] : undefined;
-        const outcome = eventOutcome
-          ? [
-              {
-                outcome: eventOutcome as EventOutcome,
-                outcomeDetail: eventOutcomeNote.trim() ? [{ eventOutcomeDetailNote: eventOutcomeNote.trim() }] : undefined,
-              },
-            ]
-          : undefined;
-        body = { type: eventType, detail, outcome };
-      } else {
-        body = JSON.parse(eventAdvancedJson) as RecordObjectEventRequest;
-      }
+      const detail = eventDetail.trim() ? [{ detail: eventDetail.trim() }] : undefined;
+      const outcome = eventOutcome
+        ? [
+            {
+              outcome: eventOutcome as EventOutcome,
+              outcomeDetail: eventOutcomeNote.trim() ? [{ eventOutcomeDetailNote: eventOutcomeNote.trim() }] : undefined,
+            },
+          ]
+        : undefined;
+      const body: RecordObjectEventRequest = { type: eventType, detail, outcome };
 
       return recordObjectEvent(objectId, body);
     },
@@ -755,8 +813,6 @@ export function ObjectPage() {
       setEventDetail('');
       setEventOutcome('');
       setEventOutcomeNote('');
-      setEventAdvancedJson('');
-      setEventSimpleMode(true);
     },
     onError: (e) => {
       setEventError(e instanceof Error ? e.message : 'Не удалось записать событие.');
@@ -1260,11 +1316,6 @@ export function ObjectPage() {
 
                         {canWrite && (
                           <Stack spacing={1.25}>
-                            <FormControlLabel
-                              control={<Checkbox checked={rightsSimpleMode} onChange={(e) => setRightsSimpleMode(e.target.checked)} />}
-                              label="Простой режим (рекомендуется)"
-                            />
-
                             <FormControl size="small" fullWidth>
                               <InputLabel id="rights-basis">Rights basis</InputLabel>
                               <Select
@@ -1312,7 +1363,7 @@ export function ObjectPage() {
                               </Alert>
                             )}
 
-                            {rightsSimpleMode && rightsBasis === 'COPYRIGHT' && (
+                            {rightsBasis === 'COPYRIGHT' && (
                               <Stack spacing={1.25}>
                                 <TextField size="small" label="Статус" value={copyrightStatus} onChange={(e) => setCopyrightStatus(e.target.value)} />
                                 <TextField size="small" label="Юрисдикция" value={copyrightJurisdiction} onChange={(e) => setCopyrightJurisdiction(e.target.value)} />
@@ -1333,14 +1384,14 @@ export function ObjectPage() {
                               </Stack>
                             )}
 
-                            {rightsSimpleMode && rightsBasis === 'LICENSE' && (
+                            {rightsBasis === 'LICENSE' && (
                               <Stack spacing={1.25}>
                                 <TextField size="small" label="Условия лицензии" value={licenseTerms} onChange={(e) => setLicenseTerms(e.target.value)} multiline minRows={3} />
                                 <TextField size="small" label="Примечания (по одной строке)" value={licenseNote} onChange={(e) => setLicenseNote(e.target.value)} multiline minRows={3} />
                               </Stack>
                             )}
 
-                            {rightsSimpleMode && rightsBasis === 'STATUTE' && (
+                            {rightsBasis === 'STATUTE' && (
                               <Stack spacing={1.25}>
                                 <TextField size="small" label="Юрисдикция" value={statuteJurisdiction} onChange={(e) => setStatuteJurisdiction(e.target.value)} />
                                 <TextField size="small" label="Ссылка/цитирование" value={statuteCitation} onChange={(e) => setStatuteCitation(e.target.value)} />
@@ -1354,34 +1405,10 @@ export function ObjectPage() {
                               </Stack>
                             )}
 
-                            {rightsSimpleMode && rightsBasis === 'OTHER' && (
+                            {rightsBasis === 'OTHER' && (
                               <Stack spacing={1.25}>
                                 <TextField size="small" label="Основание" value={otherRightsBasis} onChange={(e) => setOtherRightsBasis(e.target.value)} />
                                 <TextField size="small" label="Примечания (по одной строке)" value={otherRightsNote} onChange={(e) => setOtherRightsNote(e.target.value)} multiline minRows={3} />
-                              </Stack>
-                            )}
-
-                            {!rightsSimpleMode && (
-                              <Stack spacing={1.25}>
-                                <Alert severity="info" sx={{ mb: 0 }}>
-                                  Расширенный режим: можно передать payload/agents напрямую JSON.
-                                </Alert>
-                                <TextField
-                                  size="small"
-                                  label="payload (JSON)"
-                                  value={rightsPayloadJson}
-                                  onChange={(e) => setRightsPayloadJson(e.target.value)}
-                                  multiline
-                                  minRows={6}
-                                />
-                                <TextField
-                                  size="small"
-                                  label="agents (JSON array)"
-                                  value={rightsAgentsJson}
-                                  onChange={(e) => setRightsAgentsJson(e.target.value)}
-                                  multiline
-                                  minRows={4}
-                                />
                               </Stack>
                             )}
 
@@ -1404,7 +1431,6 @@ export function ObjectPage() {
                                   setRightsStatementId('');
                                   setSelectedExistingRightsId('');
                                   setRightsBasis('COPYRIGHT');
-                                  setRightsSimpleMode(true);
                                   setCopyrightStatus('');
                                   setCopyrightJurisdiction('');
                                   setCopyrightStatusDeterminationDate('');
@@ -1417,8 +1443,6 @@ export function ObjectPage() {
                                   setStatuteCitation('');
                                   setStatuteDeterminationDate('');
                                   setStatuteNote('');
-                                  setRightsPayloadJson('');
-                                  setRightsAgentsJson('');
                                 }}
                               >
                                 Очистить форму
@@ -1491,85 +1515,63 @@ export function ObjectPage() {
 
                         {canWrite && (
                           <Stack spacing={1.25}>
-                            <FormControlLabel
-                              control={<Checkbox checked={eventSimpleMode} onChange={(e) => setEventSimpleMode(e.target.checked)} />}
-                              label="Простой режим (рекомендуется)"
-                            />
-
-                            {eventSimpleMode ? (
-                              <Stack spacing={1.25}>
-                                <FormControl size="small" fullWidth>
-                                  <InputLabel id="event-type">Тип события</InputLabel>
-                                  <Select
-                                    labelId="event-type"
-                                    label="Тип события"
-                                    value={eventType}
-                                    onChange={(e) => setEventType(e.target.value as ObjectEventType)}
-                                  >
-                                    {(Object.keys(EVENT_TYPE_CREATE_LABEL) as ObjectEventType[]).map((k) => (
-                                      <MenuItem key={k} value={k}>
-                                        {EVENT_TYPE_CREATE_LABEL[k]}
-                                      </MenuItem>
-                                    ))}
-                                  </Select>
-                                </FormControl>
-
-                                <TextField
-                                  size="small"
-                                  label="Описание (detail)"
-                                  value={eventDetail}
-                                  onChange={(e) => setEventDetail(e.target.value)}
-                                  multiline
-                                  minRows={3}
-                                  helperText="Опционально. Будет записано в EventDetailInformation.detail"
-                                />
-
-                                <FormControl size="small" fullWidth>
-                                  <InputLabel id="event-outcome">Результат (outcome)</InputLabel>
-                                  <Select
-                                    labelId="event-outcome"
-                                    label="Результат (outcome)"
-                                    value={eventOutcome}
-                                    onChange={(e) => setEventOutcome((e.target.value as EventOutcome) || '')}
-                                  >
-                                    <MenuItem value="">
-                                      <em>Не указывать</em>
+                            <Stack spacing={1.25}>
+                              <FormControl size="small" fullWidth>
+                                <InputLabel id="event-type">Тип события</InputLabel>
+                                <Select
+                                  labelId="event-type"
+                                  label="Тип события"
+                                  value={eventType}
+                                  onChange={(e) => setEventType(e.target.value as ObjectEventType)}
+                                >
+                                  {(Object.keys(EVENT_TYPE_CREATE_LABEL) as ObjectEventType[]).map((k) => (
+                                    <MenuItem key={k} value={k}>
+                                      {EVENT_TYPE_CREATE_LABEL[k]}
                                     </MenuItem>
-                                    <MenuItem value="SUCCESS">SUCCESS</MenuItem>
-                                    <MenuItem value="FAILURE">FAILURE</MenuItem>
-                                  </Select>
-                                </FormControl>
+                                  ))}
+                                </Select>
+                              </FormControl>
 
-                                <TextField
-                                  size="small"
-                                  label="Примечание к результату (outcomeDetailNote)"
-                                  value={eventOutcomeNote}
-                                  onChange={(e) => setEventOutcomeNote(e.target.value)}
-                                  disabled={!eventOutcome}
-                                  helperText={eventOutcome ? 'Опционально.' : 'Сначала выберите outcome.'}
-                                />
-                              </Stack>
-                            ) : (
-                              <Stack spacing={1.25}>
-                                <Alert severity="info" sx={{ mb: 0 }}>
-                                  Расширенный режим: передайте тело запроса целиком (RecordObjectEventRequest) в JSON.
-                                </Alert>
-                                <TextField
-                                  size="small"
-                                  label="event body (JSON)"
-                                  value={eventAdvancedJson}
-                                  onChange={(e) => setEventAdvancedJson(e.target.value)}
-                                  multiline
-                                  minRows={8}
-                                  placeholder={'{\n  "type": "OTHER",\n  "detail": [{"detail": "..."}],\n  "outcome": [{"outcome": "SUCCESS"}]\n}'}
-                                />
-                              </Stack>
-                            )}
+                              <TextField
+                                size="small"
+                                label="Описание (detail)"
+                                value={eventDetail}
+                                onChange={(e) => setEventDetail(e.target.value)}
+                                multiline
+                                minRows={3}
+                                helperText="Опционально. Будет записано в EventDetailInformation.detail"
+                              />
+
+                              <FormControl size="small" fullWidth>
+                                <InputLabel id="event-outcome">Результат (outcome)</InputLabel>
+                                <Select
+                                  labelId="event-outcome"
+                                  label="Результат (outcome)"
+                                  value={eventOutcome}
+                                  onChange={(e) => setEventOutcome((e.target.value as EventOutcome) || '')}
+                                >
+                                  <MenuItem value="">
+                                    <em>Не указывать</em>
+                                  </MenuItem>
+                                  <MenuItem value="SUCCESS">SUCCESS</MenuItem>
+                                  <MenuItem value="FAILURE">FAILURE</MenuItem>
+                                </Select>
+                              </FormControl>
+
+                              <TextField
+                                size="small"
+                                label="Примечание к результату (outcomeDetailNote)"
+                                value={eventOutcomeNote}
+                                onChange={(e) => setEventOutcomeNote(e.target.value)}
+                                disabled={!eventOutcome}
+                                helperText={eventOutcome ? 'Опционально.' : 'Сначала выберите outcome.'}
+                              />
+                            </Stack>
 
                             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                               <Button
                                 variant="contained"
-                                disabled={recordEventMutation.isPending || (!eventSimpleMode && !eventAdvancedJson.trim())}
+                                disabled={recordEventMutation.isPending}
                                 onClick={() => {
                                   setEventError(null);
                                   recordEventMutation.mutate();
@@ -1582,12 +1584,10 @@ export function ObjectPage() {
                                 disabled={recordEventMutation.isPending}
                                 onClick={() => {
                                   setEventError(null);
-                                  setEventSimpleMode(true);
                                   setEventType('OTHER');
                                   setEventDetail('');
                                   setEventOutcome('');
                                   setEventOutcomeNote('');
-                                  setEventAdvancedJson('');
                                 }}
                               >
                                 Очистить форму
@@ -1914,6 +1914,51 @@ export function ObjectPage() {
                       {premisQuery.isSuccess && premisQuery.data && <PremisXmlViewer xml={premisQuery.data} />}
                     </AccordionDetails>
                   </Accordion>
+                </Stack>
+              </CardContent>
+            </Card>
+
+            <Card variant="outlined">
+              <CardContent>
+                <Stack spacing={1.5}>
+                  <Box>
+                    <Typography variant="h6">Связи</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Связи интеллектуальной сущности с другими объектами.
+                    </Typography>
+                  </Box>
+
+                  {relationships.length === 0 ? (
+                    <Alert severity="info">Связи с другими объектами отсутствуют.</Alert>
+                  ) : (
+                    <List dense disablePadding>
+                      {relationships.map((relationship, idx) => (
+                        <ListItem key={`${relationship.type ?? 'type'}:${relationship.subType ?? 'subtype'}:${idx}`} divider disableGutters>
+                          <ListItemText
+                            primary={
+                              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ alignItems: { sm: 'center' } }}>
+                                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                                  {relationship.subType ?? 'Без подтипа'}
+                                </Typography>
+                                {relationship.type && <Chip size="small" variant="outlined" label={relationship.type} />}
+                              </Stack>
+                            }
+                            secondary={
+                              <Stack spacing={0.5} sx={{ mt: 0.5 }}>
+                                {(relationship.relatedObjects ?? []).map((relatedObject, relatedIdx) => (
+                                  <RelationshipObjectReference
+                                    key={`${relatedObject.value ?? 'object'}:${relatedIdx}`}
+                                    identifierType={relatedObject.type}
+                                    identifierValue={relatedObject.value}
+                                  />
+                                ))}
+                              </Stack>
+                            }
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  )}
                 </Stack>
               </CardContent>
             </Card>
