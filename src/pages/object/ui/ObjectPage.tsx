@@ -425,8 +425,21 @@ async function getCachedMetadata(objectId: string) {
   });
 }
 
+function hasSuperAdminRoleInAcl(params: { acl?: ObjectAcl; userId: string | null | undefined }): boolean {
+  const { acl, userId } = params;
+  if (!userId) return false;
+  const entries = acl?.entries ?? [];
+  for (const e of entries) {
+    const principalId = e.principal?.id;
+    if (principalId !== userId) continue;
+    if (e.role === 'SUPER_ADMIN') return true;
+  }
+  return false;
+}
+
 function hasWritePermission(params: { acl?: ObjectAcl; userId: string | null | undefined }): boolean {
   const { acl, userId } = params;
+  if (hasSuperAdminRoleInAcl({ acl, userId })) return true;
   if (!userId) return false;
   const entries = acl?.entries ?? [];
   for (const e of entries) {
@@ -440,6 +453,7 @@ function hasWritePermission(params: { acl?: ObjectAcl; userId: string | null | u
 
 function hasReadSourceFilePermission(params: { acl?: ObjectAcl; userId: string | null | undefined }): boolean {
   const { acl, userId } = params;
+  if (hasSuperAdminRoleInAcl({ acl, userId })) return true;
   if (!userId) return false;
   const entries = acl?.entries ?? [];
   for (const e of entries) {

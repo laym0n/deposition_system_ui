@@ -224,6 +224,7 @@ function Field(props: {
                   <TextField
                     fullWidth
                     size="small"
+                    multiline
                     label={`Элемент #${idx + 1}`}
                     value={itemVal === undefined || itemVal === null ? '' : String(itemVal)}
                     onChange={(e) => {
@@ -291,6 +292,7 @@ function Field(props: {
     <TextField
       fullWidth
       size="small"
+      multiline={!isNum}
       id={fieldId}
       label={`${label}${isReq ? ' *' : ''}`}
       value={value === undefined || value === null ? '' : String(value)}

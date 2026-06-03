@@ -165,7 +165,7 @@ export function JobsPage() {
         )}
 
         {!jobsQuery.isLoading && !jobsQuery.isError && totalItems === 0 && (
-          <Alert severity="info">Пока нет депонирований. Создайте депонирование на странице асинхронного депонирования.</Alert>
+          <Alert severity="info">Пока нет депонирований. Создайте депонирование на странице депонирования</Alert>
         )}
 
         {jobs.length > 0 && (
